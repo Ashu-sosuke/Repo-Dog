@@ -1,5 +1,5 @@
 -- 20260809000000_initial_schema.sql
--- Initial database schema for Project Tracker
+-- Initial database schema for Repo Dog
 
 -- Enable uuid extension
 create extension if not exists "uuid-ossp";

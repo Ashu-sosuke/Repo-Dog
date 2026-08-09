@@ -66,7 +66,7 @@ class LoginScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Project Tracker',
+                    'Repo Dog',
                     style: GoogleFonts.outfit(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

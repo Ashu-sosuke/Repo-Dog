@@ -65,8 +65,8 @@ async def get_project_details(
         # Return fallback mock if not found in db yet
         return {
             "id": project_id,
-            "name": "Project Tracker",
-            "full_name": "developer/project-tracker",
+            "name": "Repo Dog",
+            "full_name": "developer/repo-dog",
             "description": "Unified GitHub dashboard & native developer planner",
             "stars": 42,
             "forks": 5,

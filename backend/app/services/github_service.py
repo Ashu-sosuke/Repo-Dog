@@ -34,7 +34,7 @@ class GitHubSyncService:
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Accept": "application/vnd.github.v3+json",
-            "User-Agent": "Project-Tracker-App"
+            "User-Agent": "Repo-Dog-App"
         }
 
         async with httpx.AsyncClient(timeout=20.0) as http_client:

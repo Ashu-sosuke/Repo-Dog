@@ -19,20 +19,20 @@ void main() async {
 
   runApp(
     const ProviderScope(
-      child: ProjectTrackerApp(),
+      child: RepoDogApp(),
     ),
   );
 }
 
-class ProjectTrackerApp extends ConsumerWidget {
-  const ProjectTrackerApp({super.key});
+class RepoDogApp extends ConsumerWidget {
+  const RepoDogApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Project Tracker',
+      title: 'Repo Dog',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,

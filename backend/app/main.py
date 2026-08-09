@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, dashboard, projects, sync
 
 app = FastAPI(
-    title="Project Tracker Backend API",
+    title="Repo Dog Backend API",
     description="FastAPI service for GitHub sync, Supabase data management, and Firebase token verification.",
     version="1.0.0"
 )
@@ -44,7 +44,7 @@ app.include_router(sync.router)
 @app.get("/")
 async def root():
     return {
-        "app": "Project Tracker API",
+        "app": "Repo Dog API",
         "status": "healthy",
         "version": "1.0.0"
     }

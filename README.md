@@ -1,8 +1,8 @@
-# 🚀 Project Tracker
+# 🚀 Repo Dog
 
 A modern, cross-platform developer hub and GitHub management dashboard built with **Flutter**, **FastAPI**, **Supabase**, and **Firebase Authentication**.
 
-Project Tracker unifies your GitHub activity (repositories, branches, commits, pull requests, issues, and GitHub Actions CI runs) into a single, dark-themed developer workspace.
+Repo Dog unifies your GitHub activity (repositories, branches, commits, pull requests, issues, and GitHub Actions CI runs) into a single, dark-themed developer workspace.
 
 ---
 
@@ -43,7 +43,7 @@ graph LR
 ## 📂 Project Structure
 
 ```
-Project Tracker/
+Repo Dog/
 ├── app/                        # Flutter multi-platform application
 │   ├── android/                # Android native project & google-services.json
 │   ├── lib/
