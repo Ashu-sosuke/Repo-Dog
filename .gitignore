@@ -1,0 +1,71 @@
+# ==========================================
+# Root .gitignore — Project Tracker
+# ==========================================
+
+# Secrets & Environment Files (CRITICAL: Never commit keys)
+.env
+*.env
+*.env.local
+*.env.production
+serviceAccountKey.json
+backend/serviceAccountKey.json
+*.pem
+*.key
+
+# Python Virtual Environments & Caches
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Node.js Dependencies
+node_modules/
+
+# Diagnostic & Temporary Local Utility Scripts
+check_db.py
+manual_token_inject.py
+diagnose_sync.py
+test_upsert.py
+run_sync_now.py
+
+# Flutter & Dart Build Artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+app/build/
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.pub-cache/
+app/.pub/
+
+# Android Studio & Gradle Build Output
+app/android/.gradle/
+app/android/.kotlin/
+app/android/app/debug/
+app/android/app/profile/
+app/android/app/release/
+*.apk
+*.aab
+
+# IDE & Editor Files
+.idea/
+*.iml
+*.ipr
+*.iws
+app/app.iml
+.vscode/
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Thumbs.db

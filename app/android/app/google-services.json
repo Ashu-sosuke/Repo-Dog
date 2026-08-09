@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "574974313301",
+    "project_id": "repo-dog",
+    "storage_bucket": "repo-dog.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:574974313301:android:52276ee8fd5577b66165dc",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmVDp7La4QLPWoGCYiIi4ASOo8uBOxD-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
