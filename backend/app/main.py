@@ -29,7 +29,7 @@ ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",  # matches ANY localhost port
+    allow_origin_regex=r"https?://.*",  # matches localhost and production domains (GitHub Pages, Vercel, Netlify, Render)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
