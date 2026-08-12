@@ -177,7 +177,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       debugPrint('[Auth] GitHub sign-in error: $e');
       String msg = e.toString();
-      if (msg.contains('INVALID_APP_ID')) {
+      if (msg.contains('connection timeout') || msg.contains('connectTimeout') || msg.contains('receiveTimeout')) {
+        msg = 'Server was sleeping (Render Free Tier cold start). Now awake! Please tap "Sign in with GitHub" again.';
+      } else if (msg.contains('INVALID_APP_ID')) {
         msg = 'Android Firebase App ID is not registered yet.\nPlease use "Dev Demo Mode (Fast API Direct)" below to test on mobile!';
       }
       state = state.copyWith(
