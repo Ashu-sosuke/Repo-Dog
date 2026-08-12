@@ -1,14 +1,18 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConstants {
-  // Backend is always on localhost:8000 during local development.
-  // On Flutter Web the browser itself calls this URL directly.
-  // On Android emulator use 10.0.2.2:8000 instead of localhost.
+  // Production (Render) URL is always used on physical devices.
+  // Only Flutter Web debug builds can safely use localhost:8000 because
+  // the browser and the backend both run on the same machine.
+  static const String _renderUrl = 'https://repo-dog.onrender.com';
+  static const String _localUrl = 'http://localhost:8000';
+
   static String get baseUrl {
-    if (kReleaseMode) {
-      return 'https://repo-dog.onrender.com';
+    // kIsWeb = true only when compiled for the browser
+    if (kIsWeb && !kReleaseMode) {
+      return _localUrl; // browser dev: localhost works fine
     }
-    return 'http://localhost:8000';
+    return _renderUrl; // physical Android/iOS + all release builds
   }
 
   static const String authGithubCallback = '/auth/github/callback';
