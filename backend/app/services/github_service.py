@@ -42,7 +42,7 @@ class GitHubSyncService:
 
     @staticmethod
     async def fetch_user_profile_full(access_token: str) -> Dict[str, Any]:
-        """Fetch GitHub user profile metadata + Profile README."""
+        """Fetch GitHub user profile metadata + Profile README using OAuth access token."""
         headers_json = {
             "Authorization": f"Bearer {access_token}",
             "Accept": "application/vnd.github.v3+json",
@@ -60,6 +60,37 @@ class GitHubSyncService:
                         profile_data["profile_readme"] = readme_text
         except Exception as e:
             print(f"Error fetching full user profile: {e}")
+        return profile_data
+
+    @staticmethod
+    async def fetch_user_profile_by_username(username: str, access_token: Optional[str] = None) -> Dict[str, Any]:
+        """Fetch GitHub user profile metadata + Profile README by public username (works even without token)."""
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "Repo-Dog-App"
+        }
+        if access_token:
+            headers["Authorization"] = f"Bearer {access_token}"
+
+        profile_data = {}
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                u_resp = await http_client.get(f"{GITHUB_API_BASE}/users/{username}", headers=headers)
+                if u_resp.status_code == 200:
+                    profile_data = u_resp.json()
+
+                readme_headers = {
+                    "Accept": "application/vnd.github.v3.raw",
+                    "User-Agent": "Repo-Dog-App"
+                }
+                if access_token:
+                    readme_headers["Authorization"] = f"Bearer {access_token}"
+
+                r_resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{username}/{username}/readme", headers=readme_headers)
+                if r_resp.status_code == 200:
+                    profile_data["profile_readme"] = r_resp.text
+        except Exception as e:
+            print(f"Error fetching profile by username for {username}: {e}")
         return profile_data
 
     @staticmethod
