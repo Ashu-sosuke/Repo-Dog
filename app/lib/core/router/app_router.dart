@@ -7,6 +7,9 @@ import '../../features/auth/sync_loading_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/projects/projects_screen.dart';
 import '../../features/projects/project_detail_screen.dart';
+import '../../features/profile/description_screen.dart';
+import '../../features/settings/settings_screen.dart';
+import '../layout/app_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -35,6 +38,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // ── Unauthenticated routes ────────────────────────────────────────
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
@@ -43,20 +47,35 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/syncing',
         builder: (context, state) => const SyncLoadingScreen(),
       ),
-      GoRoute(
-        path: '/dashboard',
-        builder: (context, state) => const DashboardScreen(),
-      ),
-      GoRoute(
-        path: '/projects',
-        builder: (context, state) => const ProjectsScreen(),
+
+      // ── Authenticated shell routes (sidebar persists) ─────────────────
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(
-            path: ':id',
-            builder: (context, state) {
-              final id = state.pathParameters['id'] ?? '';
-              return ProjectDetailScreen(projectId: id);
-            },
+            path: '/dashboard',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/description',
+            builder: (context, state) => const DescriptionScreen(),
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/projects',
+            builder: (context, state) => const ProjectsScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final id = state.pathParameters['id'] ?? '';
+                  return ProjectDetailScreen(projectId: id);
+                },
+              ),
+            ],
           ),
         ],
       ),

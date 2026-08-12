@@ -19,4 +19,5 @@ class ApiConstants {
 
   static const String dashboard = '/dashboard';
   static const String projects = '/projects';
+  static const String userDescription = '/user/description';
 }

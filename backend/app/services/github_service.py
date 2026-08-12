@@ -22,6 +22,97 @@ class GitHubSyncService:
         return None
 
     @staticmethod
+    async def fetch_repo_readme(access_token: str, owner: str, repo_name: str) -> Optional[str]:
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/vnd.github.v3.raw",
+            "User-Agent": "Repo-Dog-App"
+        }
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                resp = await http_client.get(
+                    f"{GITHUB_API_BASE}/repos/{owner}/{repo_name}/readme",
+                    headers=headers
+                )
+                if resp.status_code == 200:
+                    return resp.text
+        except Exception as e:
+            print(f"Error fetching README for {owner}/{repo_name}: {e}")
+        return None
+
+    @staticmethod
+    async def fetch_user_profile_full(access_token: str) -> Dict[str, Any]:
+        """Fetch GitHub user profile metadata + Profile README."""
+        headers_json = {
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "Repo-Dog-App"
+        }
+        profile_data = {}
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                u_resp = await http_client.get(f"{GITHUB_API_BASE}/user", headers=headers_json)
+                if u_resp.status_code == 200:
+                    profile_data = u_resp.json()
+                    username = profile_data.get("login")
+                    if username:
+                        readme_text = await GitHubSyncService.fetch_repo_readme(access_token, username, username)
+                        profile_data["profile_readme"] = readme_text
+        except Exception as e:
+            print(f"Error fetching full user profile: {e}")
+        return profile_data
+
+    @staticmethod
+    async def fetch_user_contributions(access_token: str) -> Dict[str, Any]:
+        """Fetch real contribution calendar from GitHub GraphQL API."""
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "Repo-Dog-App"
+        }
+        query = """
+        query {
+          viewer {
+            contributionsCollection {
+              contributionCalendar {
+                totalContributions
+                weeks {
+                  contributionDays {
+                    date
+                    contributionCount
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as http_client:
+                gql_resp = await http_client.post(
+                    f"{GITHUB_API_BASE}/graphql",
+                    json={"query": query},
+                    headers=headers
+                )
+                if gql_resp.status_code == 200:
+                    cal = gql_resp.json().get("data", {}).get("viewer", {}).get("contributionsCollection", {}).get("contributionCalendar", {})
+                    total = cal.get("totalContributions", 0)
+                    daily_counts = {}
+                    for week in cal.get("weeks", []):
+                        for day in week.get("contributionDays", []):
+                            date_str = day.get("date")
+                            count = day.get("contributionCount", 0)
+                            if date_str:
+                                daily_counts[date_str] = count
+                    return {
+                        "total_contributions": total,
+                        "activity_heatmap": daily_counts
+                    }
+        except Exception as e:
+            print(f"Error fetching GraphQL contributions: {e}")
+        return {"total_contributions": 0, "activity_heatmap": {}}
+
+    @staticmethod
     async def sync_all_user_repos(user_db_id: str) -> Dict[str, Any]:
         print(f"[Sync] Starting GitHub sync for user_db_id={user_db_id}")
         access_token = await GitHubSyncService.get_user_access_token(user_db_id)
@@ -37,22 +128,38 @@ class GitHubSyncService:
             "User-Agent": "Repo-Dog-App"
         }
 
-        async with httpx.AsyncClient(timeout=20.0) as http_client:
-            # 1. Fetch Repositories
-            print(f"[Sync] Requesting GET {GITHUB_API_BASE}/user/repos")
-            repos_resp = await http_client.get(f"{GITHUB_API_BASE}/user/repos?sort=updated&per_page=30", headers=headers)
-            print(f"[Sync] GitHub API HTTP status: {repos_resp.status_code}")
-            if repos_resp.status_code != 200:
-                print(f"[Sync Error] GitHub API response: {repos_resp.text}")
-                return {"status": "error", "message": f"GitHub API error: {repos_resp.status_code} {repos_resp.text}"}
+        async with httpx.AsyncClient(timeout=30.0) as http_client:
+            # 1. Fetch Repositories sorted by updated_at descending
+            print(f"[Sync] Requesting GET {GITHUB_API_BASE}/user/repos?sort=updated&direction=desc&per_page=100")
+            all_repos = []
+            page = 1
+            while True:
+                repos_resp = await http_client.get(
+                    f"{GITHUB_API_BASE}/user/repos?sort=updated&direction=desc&per_page=100&page={page}",
+                    headers=headers
+                )
+                if repos_resp.status_code != 200:
+                    print(f"[Sync Error] GitHub API error: {repos_resp.status_code} {repos_resp.text}")
+                    break
 
-            repos = repos_resp.json()
-            print(f"[Sync] Received {len(repos)} repositories from GitHub API!")
+                page_repos = repos_resp.json()
+                if not page_repos or not isinstance(page_repos, list):
+                    break
+
+                all_repos.extend(page_repos)
+                if len(page_repos) < 100:
+                    break
+                page += 1
+
+            print(f"[Sync] Received total {len(all_repos)} repositories from GitHub API!")
             client = get_supabase_client()
             synced_count = 0
 
-            for r in repos:
+            for r in all_repos:
                 repo_id = r["id"]
+                # Store GitHub's updated_at in last_synced_at timestamp so order is preserved in Supabase
+                updated_at_str = r.get("updated_at") or r.get("pushed_at") or datetime.now(timezone.utc).isoformat()
+                
                 repo_data = {
                     "user_id": user_db_id,
                     "github_repo_id": repo_id,
@@ -65,12 +172,11 @@ class GitHubSyncService:
                     "primary_language": r.get("language") or "Code",
                     "default_branch": r.get("default_branch", "main"),
                     "status": "active",
-                    "last_synced_at": datetime.now(timezone.utc).isoformat()
+                    "last_synced_at": updated_at_str
                 }
 
                 if client:
                     try:
-                        # Upsert repo
                         upsert_res = client.table("repositories").upsert(
                             repo_data,
                             on_conflict="user_id,github_repo_id"
@@ -93,7 +199,7 @@ class GitHubSyncService:
 
             return {
                 "status": "success",
-                "message": f"Successfully synced {synced_count} repositories and details from GitHub.",
+                "message": f"Successfully synced {synced_count} repositories and commit history from GitHub.",
                 "repos_synced": synced_count
             }
 
@@ -108,7 +214,6 @@ class GitHubSyncService:
                     b_name = b["name"]
                     is_def = (b_name == default_branch)
                     
-                    # Check commit date for stale calculation
                     last_commit_at = None
                     is_stale = False
                     if "commit" in b and "url" in b["commit"]:
@@ -131,26 +236,30 @@ class GitHubSyncService:
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     }
                     if client:
-                        client.table("branches").upsert(branch_data).execute()
+                        client.table("branches").upsert(branch_data, on_conflict="repository_id,name").execute()
         except Exception as e:
             print(f"Error syncing branches for {owner}/{repo}: {e}")
 
     @staticmethod
     async def _sync_repo_commits(http_client: httpx.AsyncClient, headers: dict, db_repo_id: str, owner: str, repo: str):
         try:
-            resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{owner}/{repo}/commits?per_page=15", headers=headers)
+            resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{owner}/{repo}/commits?per_page=100", headers=headers)
             if resp.status_code == 200:
                 commits = resp.json()
                 client = get_supabase_client()
                 for c in commits:
-                    sha = c["sha"]
+                    if not isinstance(c, dict):
+                        continue
+                    sha = c.get("sha")
+                    if not sha:
+                        continue
                     commit_info = c.get("commit", {})
                     c_data = {
                         "repository_id": db_repo_id,
                         "sha": sha,
                         "message": commit_info.get("message"),
                         "author_name": commit_info.get("author", {}).get("name"),
-                        "committed_at": commit_info.get("committer", {}).get("date")
+                        "committed_at": commit_info.get("committer", {}).get("date") or commit_info.get("author", {}).get("date")
                     }
                     if client:
                         client.table("commits").upsert(c_data, on_conflict="repository_id,sha").execute()
@@ -160,13 +269,13 @@ class GitHubSyncService:
     @staticmethod
     async def _sync_repo_issues(http_client: httpx.AsyncClient, headers: dict, db_repo_id: str, owner: str, repo: str):
         try:
-            resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{owner}/{repo}/issues?state=all&per_page=15", headers=headers)
+            resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{owner}/{repo}/issues?state=all&per_page=30", headers=headers)
             if resp.status_code == 200:
                 issues = resp.json()
                 client = get_supabase_client()
                 for iss in issues:
                     if "pull_request" in iss:
-                        continue # PRs handled separately
+                        continue
                     labels = [l["name"] for l in iss.get("labels", []) if isinstance(l, dict)]
                     iss_data = {
                         "repository_id": db_repo_id,
@@ -186,7 +295,7 @@ class GitHubSyncService:
     @staticmethod
     async def _sync_repo_pull_requests(http_client: httpx.AsyncClient, headers: dict, db_repo_id: str, owner: str, repo: str):
         try:
-            resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{owner}/{repo}/pulls?state=all&per_page=15", headers=headers)
+            resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{owner}/{repo}/pulls?state=all&per_page=30", headers=headers)
             if resp.status_code == 200:
                 prs = resp.json()
                 client = get_supabase_client()
@@ -209,7 +318,7 @@ class GitHubSyncService:
     @staticmethod
     async def _sync_repo_workflows(http_client: httpx.AsyncClient, headers: dict, db_repo_id: str, owner: str, repo: str):
         try:
-            resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{owner}/{repo}/actions/runs?per_page=10", headers=headers)
+            resp = await http_client.get(f"{GITHUB_API_BASE}/repos/{owner}/{repo}/actions/runs?per_page=20", headers=headers)
             if resp.status_code == 200:
                 runs = resp.json().get("workflow_runs", [])
                 client = get_supabase_client()

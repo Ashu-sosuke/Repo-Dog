@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from app.core.security import verify_firebase_token
 from app.core.supabase_client import get_supabase_client
 from app.services.github_service import GitHubSyncService
+from app.core.cache import cache
 
 router = APIRouter(prefix="/sync", tags=["GitHub Sync"])
 
@@ -14,6 +15,7 @@ async def trigger_sync_all(
 ):
     firebase_uid = firebase_user.get("uid")
     print(f"[POST /sync/all] Triggered by firebase_uid={firebase_uid}")
+    cache.invalidate()  # Purge stale cached responses so fresh data will be fetched after sync
     client = get_supabase_client()
     
     if not client:

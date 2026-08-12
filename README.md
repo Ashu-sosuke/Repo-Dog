@@ -1,8 +1,8 @@
 # 🚀 Repo Dog
 
-A modern, cross-platform developer hub and GitHub management dashboard built with **Flutter**, **FastAPI**, **Supabase**, and **Firebase Authentication**.
+A modern, cross-platform developer workspace and GitHub tracker built with **Flutter**, **FastAPI**, **Supabase**, **GitHub REST & GraphQL APIs**, and **Firebase Authentication**.
 
-Repo Dog unifies your GitHub activity (repositories, branches, commits, pull requests, issues, and GitHub Actions CI runs) into a single, dark-themed developer workspace.
+Repo Dog unifies your entire GitHub footprint — profile metadata, profile README, repository lists, branch intelligence, commit histories, contribution activity heatmaps, PRs, CI/CD runs, and repository READMEs — into a single, high-performance GitHub dark-themed dashboard.
 
 ---
 
@@ -11,8 +11,9 @@ Repo Dog unifies your GitHub activity (repositories, branches, commits, pull req
 ```mermaid
 graph LR
     A[Flutter Client App] -- "HTTP + Firebase JWT" --> B[FastAPI Backend :8000]
+    B -- "In-Memory TTL Cache (<3ms)" --> B
     B -- "Supabase Client SDK" --> C[(Supabase PostgreSQL)]
-    B -- "httpx (OAuth PAT)" --> D[GitHub REST API v3]
+    B -- "httpx (REST & GraphQL API)" --> D[GitHub API v3 & GraphQL v4]
     A -- "1-Step OAuth" --> E[Firebase Auth]
     B -- "firebase-admin" --> E
 ```
@@ -21,11 +22,24 @@ graph LR
 
 ## ✨ Key Features
 
-- **⚡ 1-Step GitHub Sign-In**: Seamless authentication via Firebase GitHub OAuth across Web, Android, and Desktop.
-- **🔄 Live Sync Experience**: Dedicated animated loading screen (`/syncing`) with live step-by-step progress tracking (*Authentication → Repositories → Branches → Commits → PRs → Workflows*).
-- **📊 Real-time Dashboard**: Overview metrics (Total Repos, Open PRs, Failing CI Runs, Active Branches) and recent repository listings.
-- **🔍 5-Tab Repository Detail View**: Deep dive into individual project details across Overview, Branches (stale branch detection), Issues & PRs, GitHub Actions Workflows, and App-native Notes & Goals.
-- **🔐 Enterprise Token Encryption**: GitHub OAuth access tokens are encrypted at rest using Fernet symmetric encryption before storing in Supabase.
+- **⚡ Ultra-Fast Double-Layer Caching Engine**:
+  - **Backend TTL Cache (`SimpleTTLCache`)**: 5-minute in-memory response cache bringing API response times down to **<3ms**.
+  - **Frontend State Retention (`ref.keepAlive()`)**: 0ms instant tab switching across **DashBoard**, **All Repo**, **Description**, and **Setting**.
+  - **Smart Invalidation**: Triggers clean cache purges automatically when a GitHub sync is executed.
+- **🎨 GitHub Dark UI Aesthetic**: Tailored GitHub Dark theme (`#0D1117` canvas, `#161B22` sidebar, `#30363D` borders, `#58A6FF` accent blue, `#3FB950` contribution green).
+- **🔑 1-Step GitHub Sign-In**: Seamless authentication via Firebase GitHub OAuth across Web, Android, and Desktop.
+- **📈 Real GraphQL Contribution Heatmap**: Fetches exact contribution calendar from GitHub GraphQL API (`contributionsCollection.contributionCalendar`), displaying total contributions (*e.g., 249 contributions in the last year*) and daily contribution green intensity grid.
+- **📦 All Repositories Explorer**: Filter repositories by **All**, **Public**, **Private**, or **Starred** with instant search, primary language dots, star/fork metrics, and relative update timestamps (*Updated 17m ago*).
+- **📖 Live Repository README.md Viewer**: Displays full formatted Markdown for any repository directly inside the Overview tab.
+- **🌱 Deduplicated Branch Intelligence**: Real-time list of repository branches sorted with Default branch first, exact UTC commit timestamps, and stale branch detection (`STALE >30d`).
+- **👤 User Profile & Description (`/description`)**: Renders full GitHub profile metadata (*display name, bio, follower/following counts, social & website links*) alongside your special **GitHub Profile README.md** (`username/username`).
+- **⚙️ Active Settings Workspace (`/settings`)**:
+  - **Force Re-Sync Engine**: Interactive manual sync trigger with live progress feedback.
+  - **Background Sync Frequency**: Switch polling intervals (`Every 15 Mins`, `1 Hour`, `6 Hours`, `Manual Only`).
+  - **Stale Branch Threshold Slider**: Adjustable cutoff from `7` to `90` days.
+  - **Live API Health Monitor**: Real-time server status badge (`🟢 API Online`).
+  - **Sign Out Confirmation**: Modal dialog protection against accidental logouts.
+- **🔒 Enterprise Security**: GitHub OAuth access tokens are encrypted at rest using Fernet symmetric encryption before storing in Supabase.
 
 ---
 
@@ -33,8 +47,9 @@ graph LR
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend** | Flutter 3.x, Flutter Riverpod, GoRouter, Dio, Google Fonts (Outfit & Inter) |
-| **Backend** | Python 3.11+, FastAPI, Uvicorn, httpx, Cryptography (Fernet) |
+| **Frontend** | Flutter 3.x, Flutter Riverpod, GoRouter, Dio, Google Fonts (Outfit & Inter), Flutter Markdown |
+| **Backend** | Python 3.11+, FastAPI, Uvicorn, httpx, Cryptography (Fernet), In-Memory TTL Cache |
+| **APIs** | GitHub REST API v3 & GitHub GraphQL API v4 |
 | **Database** | Supabase PostgreSQL (RLS-enabled schema) |
 | **Auth** | Firebase Auth (GitHub OAuth Provider) |
 
@@ -48,22 +63,25 @@ Repo Dog/
 │   ├── android/                # Android native project & google-services.json
 │   ├── lib/
 │   │   ├── core/
-│   │   │   ├── constants/      # ApiConstants (Base URL & Routes)
+│   │   │   ├── constants/      # ApiConstants (Base URL & Endpoint Routes)
+│   │   │   ├── layout/         # AppShell (Persistent GitHub Dark Sidebar & Modal Confirmations)
 │   │   │   ├── network/        # Dio Client & Firebase Auth Interceptor
 │   │   │   ├── router/         # GoRouter navigation & route guards
-│   │   │   └── theme/          # Dark Theme aesthetic design system
+│   │   │   └── theme/          # GitHub Dark Theme design system
 │   │   ├── features/
 │   │   │   ├── auth/           # AuthNotifier, LoginScreen, SyncLoadingScreen
-│   │   │   ├── dashboard/      # Metrics Overview & Recent Repositories
-│   │   │   └── projects/       # ProjectsScreen & ProjectDetailScreen
+│   │   │   ├── dashboard/      # DashboardScreen (Stats, Starred/Recent Repos, Heatmap)
+│   │   │   ├── profile/        # DescriptionScreen (Profile Metadata & Profile README)
+│   │   │   ├── projects/       # ProjectsScreen & ProjectDetailScreen (README & Branches)
+│   │   │   └── settings/       # SettingsScreen (Sync Engine, Preferences, Stale Rules)
 │   │   └── firebase_options.dart # Auto-generated FlutterFire configuration
 │   └── pubspec.yaml            # Flutter dependencies
 │
 ├── backend/                    # FastAPI Backend Service
 │   ├── app/
-│   │   ├── core/               # Config, Security (Fernet), Supabase Client
-│   │   ├── routers/            # Auth, Dashboard, Projects, Sync API endpoints
-│   │   ├── services/           # GitHubSyncService (REST API sync engine)
+│   │   ├── core/               # Config, Cache (TTL Engine), Security (Fernet), Supabase Client
+│   │   ├── routers/            # Auth, Dashboard, Projects, User, Settings, Sync API endpoints
+│   │   ├── services/           # GitHubSyncService (REST & GraphQL sync engine)
 │   │   └── main.py             # FastAPI entrypoint & CORS configuration
 │   ├── .env                    # Environment configuration
 │   └── requirements.txt        # Python dependencies

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, dashboard, projects, sync
+from app.routers import auth, dashboard, projects, sync, user
 
 app = FastAPI(
     title="Repo Dog Backend API",
@@ -40,6 +40,7 @@ app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(projects.router)
 app.include_router(sync.router)
+app.include_router(user.router)
 
 @app.get("/")
 async def root():
