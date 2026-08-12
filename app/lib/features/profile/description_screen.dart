@@ -40,7 +40,7 @@ class _DescriptionScreenState extends ConsumerState<DescriptionScreen> {
         children: [
           // ── Top Bar ──────────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
               color: AppTheme.canvasSubtle,
               border: Border(bottom: BorderSide(color: AppTheme.borderDefault, width: 1)),
@@ -49,15 +49,18 @@ class _DescriptionScreenState extends ConsumerState<DescriptionScreen> {
               children: [
                 const Icon(Icons.info_outline_rounded, size: 18, color: AppTheme.accentBlue),
                 const SizedBox(width: 10),
-                Text(
-                  'User Profile & Description',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.fgDefault,
+                Flexible(
+                  child: Text(
+                    'User Profile & Description',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.fgDefault,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 InkWell(
                   borderRadius: BorderRadius.circular(6),
                   onTap: () => ref.refresh(userDescriptionProvider),
@@ -118,76 +121,81 @@ class _DescriptionScreenState extends ConsumerState<DescriptionScreen> {
                 final publicRepos = user['public_repos'] ?? 0;
                 final profileReadme = user['profile_readme'] as String?;
 
-                return ListView(
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    // ── Profile Header Card ──────────────────────────────
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.canvasSubtle,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.borderDefault, width: 1),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Avatar
-                          Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 36,
-                                backgroundColor: AppTheme.borderDefault,
-                                backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                                child: avatarUrl.isEmpty
-                                    ? Text(
-                                        name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                                        style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.fgDefault),
-                                      )
-                                    : null,
-                              ),
-                              Positioned(
-                                right: 2,
-                                bottom: 2,
-                                child: Container(
-                                  width: 14,
-                                  height: 14,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.successGreen,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: AppTheme.canvasSubtle, width: 2),
-                                  ),
-                                ),
-                              ),
-                            ],
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final pad = constraints.maxWidth < 600 ? 14.0 : 24.0;
+                    return ListView(
+                      padding: EdgeInsets.all(pad),
+                      children: [
+                        // ── Profile Header Card ──────────────────────────────
+                        Container(
+                          padding: EdgeInsets.all(constraints.maxWidth < 600 ? 14 : 20),
+                          decoration: BoxDecoration(
+                            color: AppTheme.canvasSubtle,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.borderDefault, width: 1),
                           ),
-                          const SizedBox(width: 20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Avatar
+                              Stack(
+                                children: [
+                                  CircleAvatar(
+                                    radius: constraints.maxWidth < 600 ? 28 : 36,
+                                    backgroundColor: AppTheme.borderDefault,
+                                    backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                                    child: avatarUrl.isEmpty
+                                        ? Text(
+                                            name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                            style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.fgDefault),
+                                          )
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    right: 2,
+                                    bottom: 2,
+                                    child: Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.successGreen,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: AppTheme.canvasSubtle, width: 2),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(width: constraints.maxWidth < 600 ? 12 : 20),
 
-                          // User info
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                              // User info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      name,
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.fgDefault,
-                                      ),
+                                    Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 2,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: GoogleFonts.outfit(
+                                            fontSize: constraints.maxWidth < 600 ? 18 : 22,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.fgDefault,
+                                          ),
+                                        ),
+                                        Text(
+                                          '@$login',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13,
+                                            color: AppTheme.fgMuted,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '@$login',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        color: AppTheme.fgMuted,
-                                      ),
-                                    ),
-                                  ],
-                                ),
                                 const SizedBox(height: 6),
                                 Text(
                                   bio,
@@ -367,11 +375,13 @@ class _DescriptionScreenState extends ConsumerState<DescriptionScreen> {
                   ],
                 );
               },
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
-    );
+    ],
+  ),
+);
   }
 }
 

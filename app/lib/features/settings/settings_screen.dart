@@ -136,66 +136,74 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: Column(
         children: [
           // ── Top Header ──────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            decoration: const BoxDecoration(
-              color: AppTheme.canvasSubtle,
-              border: Border(bottom: BorderSide(color: AppTheme.borderDefault, width: 1)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.settings_outlined, size: 18, color: AppTheme.accentBlue),
-                const SizedBox(width: 10),
-                Text(
-                  'Workspace Settings & Preferences',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.fgDefault,
-                  ),
+          Builder(
+            builder: (context) {
+              final isMobile = MediaQuery.of(context).size.width < 600;
+              return Container(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 24, vertical: 14),
+                decoration: const BoxDecoration(
+                  color: AppTheme.canvasSubtle,
+                  border: Border(bottom: BorderSide(color: AppTheme.borderDefault, width: 1)),
                 ),
-                const Spacer(),
-                // API Status Indicator
-                apiHealthAsync.when(
-                  data: (isHealthy) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isHealthy
-                          ? AppTheme.successGreen.withValues(alpha: 0.15)
-                          : AppTheme.dangerRed.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isHealthy ? AppTheme.successGreen : AppTheme.dangerRed,
+                child: Row(
+                  children: [
+                    const Icon(Icons.settings_outlined, size: 18, color: AppTheme.accentBlue),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        'Workspace Settings & Preferences',
+                        style: GoogleFonts.outfit(
+                          fontSize: isMobile ? 15 : 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.fgDefault,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: isHealthy ? AppTheme.successGreen : AppTheme.dangerRed,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          isHealthy ? 'API Online' : 'API Offline',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(width: 8),
+                    // API Status Indicator
+                    apiHealthAsync.when(
+                      data: (isHealthy) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isHealthy
+                              ? AppTheme.successGreen.withValues(alpha: 0.15)
+                              : AppTheme.dangerRed.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
                             color: isHealthy ? AppTheme.successGreen : AppTheme.dangerRed,
                           ),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: isHealthy ? AppTheme.successGreen : AppTheme.dangerRed,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isHealthy ? 'API Online' : 'API Offline',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isHealthy ? AppTheme.successGreen : AppTheme.dangerRed,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, s) => const SizedBox.shrink(),
                     ),
-                  ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, s) => const SizedBox.shrink(),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
 
           // ── Settings Form View ──────────────────────────────────────────
@@ -289,20 +297,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Background Sync Frequency',
-                                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.fgDefault),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'How often Repo Dog polls GitHub for changes.',
-                                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgMuted),
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Background Sync Frequency',
+                                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.fgDefault),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'How often Repo Dog polls GitHub for changes.',
+                                  style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgMuted),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             height: 34,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -377,20 +388,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Default Repository Sort Order',
-                                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.fgDefault),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Initial sorting for your repositories list.',
-                                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgMuted),
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Default Repository Sort Order',
+                                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.fgDefault),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Initial sorting for your repositories list.',
+                                  style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgMuted),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             height: 34,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -431,20 +445,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Stale Branch Threshold',
-                                style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.fgDefault),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Flag branches without commits for more than ${settings.staleBranchDays} days as STALE.',
-                                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgMuted),
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Stale Branch Threshold',
+                                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.fgDefault),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Flag branches without commits for more than ${settings.staleBranchDays} days as STALE.',
+                                  style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgMuted),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
@@ -482,20 +499,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Sign Out',
-                            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.fgDefault),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Sign out of your active Repo Dog workspace session.',
-                            style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgMuted),
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Sign Out',
+                              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.fgDefault),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Sign out of your active Repo Dog workspace session.',
+                              style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgMuted),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.dangerRed,
