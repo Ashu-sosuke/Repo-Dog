@@ -5,12 +5,9 @@ class ApiConstants {
   // On Flutter Web the browser itself calls this URL directly.
   // On Android emulator use 10.0.2.2:8000 instead of localhost.
   static String get baseUrl {
-    if (kIsWeb) {
-      // Browser → direct call to the FastAPI dev server
-      return 'http://localhost:8000';
+    if (kReleaseMode) {
+      return 'https://repo-dog.onrender.com';
     }
-    // Android emulator maps 10.0.2.2 → host machine's localhost
-    // For physical device on same WiFi, replace with your PC's LAN IP.
     return 'http://localhost:8000';
   }
 
