@@ -436,12 +436,15 @@ class _RepoListItemState extends State<_RepoListItem> {
                     // Title + Public/Private Badge
                     Row(
                       children: [
-                        Text(
-                          name,
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.accentBlue,
+                        Flexible(
+                          child: Text(
+                            name,
+                            style: GoogleFonts.outfit(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.accentBlue,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -453,6 +456,7 @@ class _RepoListItemState extends State<_RepoListItem> {
                       Text(
                         fullName,
                         style: GoogleFonts.inter(fontSize: 11, color: AppTheme.fgSubtle),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                     const SizedBox(height: 6),
@@ -515,7 +519,7 @@ class _RepoListItemState extends State<_RepoListItem> {
               ),
 
               // Star Action Button
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               _GhButton(
                 icon: stars > 0 ? Icons.star_rounded : Icons.star_outline_rounded,
                 iconColor: stars > 0 ? AppTheme.warningAmber : AppTheme.fgMuted,

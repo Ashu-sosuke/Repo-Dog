@@ -951,14 +951,18 @@ class _ContributionHeatmap extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '$totalCount contributions in the last year',
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.fgDefault,
+              Flexible(
+                child: Text(
+                  '$totalCount contributions in the last year',
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.fgDefault,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 'Contribution Settings ▾',
                 style: GoogleFonts.inter(fontSize: 11, color: AppTheme.fgMuted),
@@ -967,79 +971,84 @@ class _ContributionHeatmap extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Month labels
-          Padding(
-            padding: const EdgeInsets.only(left: 36),
-            child: Row(
-              children: List.generate(months.length, (i) {
-                final weeksPerLabel = 53 / months.length;
-                return SizedBox(
-                  width: weeksPerLabel * (cellSize + cellGap),
-                  child: Text(
-                    months[i],
-                    style: GoogleFonts.inter(fontSize: 10, color: AppTheme.fgMuted),
-                  ),
-                );
-              }),
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          // Grid
+          // Grid + Month labels in unified horizontal scroll view
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Day labels
-              Column(
-                children: List.generate(7, (d) {
-                  return SizedBox(
-                    height: cellSize + cellGap,
-                    width: 32,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        dayLabels[d],
-                        style: GoogleFonts.inter(fontSize: 9, color: AppTheme.fgMuted),
+              Padding(
+                padding: const EdgeInsets.only(top: 18),
+                child: Column(
+                  children: List.generate(7, (d) {
+                    return SizedBox(
+                      height: cellSize + cellGap,
+                      width: 28,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          dayLabels[d],
+                          style: GoogleFonts.inter(fontSize: 9, color: AppTheme.fgMuted),
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
-              // Cells
+              // Scrollable Month labels + Cells
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Row(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(weeks.length, (w) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: cellGap),
-                        child: Column(
-                          children: List.generate(7, (d) {
-                            final day = weeks[w][d];
-                            final level = _getLevel(day.count);
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: cellGap),
-                              child: Tooltip(
-                                message: '${day.count} commit${day.count == 1 ? '' : 's'} on ${day.dateStr}',
-                                child: Container(
-                                  width: cellSize,
-                                  height: cellSize,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.heatmapLevels[level],
-                                    borderRadius: BorderRadius.circular(2),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.04),
-                                      width: 0.5,
+                    children: [
+                      // Month labels
+                      Row(
+                        children: List.generate(months.length, (i) {
+                          final weeksPerLabel = 53 / months.length;
+                          return SizedBox(
+                            width: weeksPerLabel * (cellSize + cellGap),
+                            child: Text(
+                              months[i],
+                              style: GoogleFonts.inter(fontSize: 10, color: AppTheme.fgMuted),
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 4),
+                      // Cells
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: List.generate(weeks.length, (w) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: cellGap),
+                            child: Column(
+                              children: List.generate(7, (d) {
+                                final day = weeks[w][d];
+                                final level = _getLevel(day.count);
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: cellGap),
+                                  child: Tooltip(
+                                    message: '${day.count} commit${day.count == 1 ? '' : 's'} on ${day.dateStr}',
+                                    child: Container(
+                                      width: cellSize,
+                                      height: cellSize,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.heatmapLevels[level],
+                                        borderRadius: BorderRadius.circular(2),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(alpha: 0.04),
+                                          width: 0.5,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      );
-                    }),
+                                );
+                              }),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1051,11 +1060,14 @@ class _ContributionHeatmap extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                'Learn how we count contributions',
-                style: GoogleFonts.inter(fontSize: 10, color: AppTheme.fgMuted),
+              Flexible(
+                child: Text(
+                  'Learn how we count contributions',
+                  style: GoogleFonts.inter(fontSize: 10, color: AppTheme.fgMuted),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text('Less', style: GoogleFonts.inter(fontSize: 10, color: AppTheme.fgMuted)),
               const SizedBox(width: 4),
               ...AppTheme.heatmapLevels.map(
