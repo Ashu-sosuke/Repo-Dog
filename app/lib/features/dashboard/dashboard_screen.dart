@@ -107,54 +107,59 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   },
                 ),
 
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── Welcome Banner ──────────────────────────────────
-                      _WelcomeBanner(
-                        username: username,
-                        healthScore: summary['health_score'] ?? 95,
-                        onViewRepos: () => context.go('/projects'),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final pad = constraints.maxWidth < 600 ? 16.0 : 24.0;
+                    return Padding(
+                      padding: EdgeInsets.all(pad),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ── Welcome Banner ──────────────────────────────────
+                          _WelcomeBanner(
+                            username: username,
+                            healthScore: summary['health_score'] ?? 95,
+                            onViewRepos: () => context.go('/projects'),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // ── Stat Cards ──────────────────────────────────────
+                          _StatsGrid(summary: summary),
+
+                          const SizedBox(height: 24),
+
+                          // ── Section Header ──────────────────────────────────
+                          Text(
+                            'Recent Repositories & Activity',
+                            style: GoogleFonts.outfit(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.fgDefault,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Divider(color: AppTheme.borderDefault),
+                          const SizedBox(height: 14),
+
+                          // ── Two-Column: Starred Repos | Recent Repos ─────────
+                          _TwoColumnRepoSection(
+                            starredRepos: starredRepos,
+                            recentRepos: recentRepos,
+                            onRepoTap: (id) => context.go('/projects/$id'),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // ── Contribution Heatmap (Real Commit History) ───────
+                          _ContributionHeatmap(
+                            activityHeatmap: heatmapData,
+                            totalContributions: summary['total_contributions'] ?? 249,
+                          ),
+                        ],
                       ),
-
-                      const SizedBox(height: 24),
-
-                      // ── Stat Cards ──────────────────────────────────────
-                      _StatsGrid(summary: summary),
-
-                      const SizedBox(height: 28),
-
-                      // ── Section Header ──────────────────────────────────
-                      Text(
-                        'Recent Repositories & Activity',
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.fgDefault,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Divider(color: AppTheme.borderDefault),
-                      const SizedBox(height: 16),
-
-                      // ── Two-Column: Starred Repos | Recent Repos ─────────
-                      _TwoColumnRepoSection(
-                        starredRepos: starredRepos,
-                        recentRepos: recentRepos,
-                        onRepoTap: (id) => context.go('/projects/$id'),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      // ── Contribution Heatmap (Real Commit History) ───────
-                      _ContributionHeatmap(
-                        activityHeatmap: heatmapData,
-                        totalContributions: summary['total_contributions'] ?? 249,
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -202,9 +207,10 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return Container(
       height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
       decoration: const BoxDecoration(
         color: AppTheme.canvasSubtle,
         border: Border(bottom: BorderSide(color: AppTheme.borderDefault, width: 1)),
@@ -214,33 +220,35 @@ class _TopBar extends StatelessWidget {
           Text(
             'Overview',
             style: GoogleFonts.outfit(
-              fontSize: 15,
+              fontSize: isMobile ? 14 : 15,
               fontWeight: FontWeight.w600,
               color: AppTheme.fgDefault,
             ),
           ),
           const Spacer(),
-          Container(
-            width: 220,
-            height: 30,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: AppTheme.canvasDefault,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppTheme.borderDefault, width: 1),
+          if (!isMobile) ...[
+            Container(
+              width: 220,
+              height: 30,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppTheme.canvasDefault,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppTheme.borderDefault, width: 1),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, size: 14, color: AppTheme.fgSubtle),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Search repositories…',
+                    style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgSubtle),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.search, size: 14, color: AppTheme.fgSubtle),
-                const SizedBox(width: 8),
-                Text(
-                  'Search repositories…',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgSubtle),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
+          ],
           _IconBtn(icon: Icons.refresh_rounded, tooltip: 'Refresh', onTap: onRefresh),
           const SizedBox(width: 4),
           _IconBtn(icon: Icons.sync_rounded, tooltip: 'Sync GitHub', onTap: onSync),
@@ -312,71 +320,77 @@ class _WelcomeBanner extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome back, $username! 🚀',
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 500;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Welcome back, $username! 🚀',
+                style: GoogleFonts.outfit(
+                  fontSize: isMobile ? 17 : 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.successGreen,
-                        shape: BoxShape.circle,
-                      ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.successGreen,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
                       'GitHub Sync Active  •  Health Score $healthScore%',
                       style: GoogleFonts.inter(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Colors.white.withValues(alpha: 0.80),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onViewRepos,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.folder_open_rounded, size: 14, color: Colors.white),
-                  const SizedBox(width: 6),
-                  Text(
-                    'View All Repos',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
+              const SizedBox(height: 14),
+              GestureDetector(
+                onTap: onViewRepos,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.folder_open_rounded, size: 14, color: Colors.white),
+                      const SizedBox(width: 6),
+                      Text(
+                        'View All Repos',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

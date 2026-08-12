@@ -8,17 +8,67 @@ import '../../features/auth/auth_provider.dart';
 /// Tracks the currently active nav index across the shell.
 final shellNavIndexProvider = StateProvider<int>((ref) => 0);
 
-/// Persistent GitHub-styled sidebar shell that wraps all authenticated screens.
+/// Persistent GitHub-styled shell that wraps all authenticated screens.
+/// On mobile (< 600px): bottom navigation bar + full-width content.
+/// On desktop/tablet (>= 600px): left sidebar.
 class AppShell extends ConsumerWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
 
   static const _navItems = [
-    _NavItem(label: 'DashBoard', icon: Icons.grid_view_rounded, route: '/dashboard'),
+    _NavItem(label: 'Dashboard', icon: Icons.grid_view_rounded, route: '/dashboard'),
     _NavItem(label: 'All Repo', icon: Icons.source_rounded, route: '/projects'),
-    _NavItem(label: 'Description', icon: Icons.info_outline_rounded, route: '/description'),
-    _NavItem(label: 'Setting', icon: Icons.settings_outlined, route: '/settings'),
+    _NavItem(label: 'Profile', icon: Icons.person_outline_rounded, route: '/description'),
+    _NavItem(label: 'Settings', icon: Icons.settings_outlined, route: '/settings'),
   ];
+
+  void _handleSignOut(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.canvasSubtle,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppTheme.borderDefault),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.logout_rounded, color: AppTheme.dangerRed, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              'Sign Out',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.fgDefault,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to sign out of Repo Dog?\nYour session will be closed.',
+          style: GoogleFonts.inter(fontSize: 13, color: AppTheme.fgMuted, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: GoogleFonts.inter(color: AppTheme.fgMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.dangerRed,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(authProvider.notifier).signOut();
+            },
+            child: Text('Sign Out', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,77 +76,102 @@ class AppShell extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final username = authState.firebaseUser?.displayName ?? 'Developer';
     final photoUrl = authState.firebaseUser?.photoURL;
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
+    void onNavTap(int index) {
+      ref.read(shellNavIndexProvider.notifier).state = index;
+      context.go(_navItems[index].route);
+    }
+
+    if (isMobile) {
+      // ── Mobile Layout: Bottom Nav Bar + Full-Width Content ──────────────
+      return Scaffold(
+        backgroundColor: AppTheme.canvasDefault,
+        // ── Mobile App Bar ───────────────────────────────────────────────
+        appBar: AppBar(
+          backgroundColor: AppTheme.canvasSubtle,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          titleSpacing: 16,
+          title: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentBlue.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppTheme.accentBlue.withValues(alpha: 0.4)),
+                ),
+                child: const Icon(Icons.pets_rounded, color: AppTheme.accentBlue, size: 16),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Repo Dog',
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.fgDefault,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => _handleSignOut(context, ref),
+                child: _Avatar(photoUrl: photoUrl, username: username, size: 32),
+              ),
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: AppTheme.borderDefault),
+          ),
+        ),
+        // ── Content ───────────────────────────────────────────────────────
+        body: child,
+        // ── Bottom Navigation Bar ─────────────────────────────────────────
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: AppTheme.canvasSubtle,
+            border: Border(top: BorderSide(color: AppTheme.borderDefault, width: 1)),
+          ),
+          child: SafeArea(
+            child: BottomNavigationBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: AppTheme.accentBlue,
+              unselectedItemColor: AppTheme.fgMuted,
+              selectedLabelStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+              unselectedLabelStyle: GoogleFonts.inter(fontSize: 11),
+              currentIndex: activeIndex,
+              onTap: onNavTap,
+              items: _navItems.map((item) => BottomNavigationBarItem(
+                icon: Icon(item.icon, size: 22),
+                label: item.label,
+              )).toList(),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Desktop/Tablet Layout: Sidebar + Content ─────────────────────────
     return Scaffold(
       backgroundColor: AppTheme.canvasDefault,
       body: Row(
         children: [
-          // ── Sidebar ───────────────────────────────────────────────────────
           _Sidebar(
             activeIndex: activeIndex,
             navItems: _navItems,
             username: username,
             photoUrl: photoUrl,
-            onNavTap: (index) {
-              ref.read(shellNavIndexProvider.notifier).state = index;
-              final route = _navItems[index].route;
-              context.go(route);
-            },
-            onSignOut: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: AppTheme.canvasSubtle,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: const BorderSide(color: AppTheme.borderDefault),
-                  ),
-                  title: Row(
-                    children: [
-                      const Icon(Icons.logout_rounded, color: AppTheme.dangerRed, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Sign Out Confirmation',
-                        style: GoogleFonts.outfit(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.fgDefault,
-                        ),
-                      ),
-                    ],
-                  ),
-                  content: Text(
-                    'Are you sure you want to sign out of Repo Dog?\nYour active workspace session will be closed.',
-                    style: GoogleFonts.inter(fontSize: 13, color: AppTheme.fgMuted, height: 1.5),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.inter(color: AppTheme.fgMuted),
-                      ),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.dangerRed,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        ref.read(authProvider.notifier).signOut();
-                      },
-                      child: Text(
-                        'Sign Out',
-                        style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+            onNavTap: onNavTap,
+            onSignOut: () => _handleSignOut(context, ref),
           ),
-          // ── Main content ──────────────────────────────────────────────────
           Expanded(child: child),
         ],
       ),
@@ -104,7 +179,7 @@ class AppShell extends ConsumerWidget {
   }
 }
 
-// ─── Sidebar Widget ──────────────────────────────────────────────────────────
+// ─── Sidebar (Desktop Only) ──────────────────────────────────────────────────
 
 class _Sidebar extends StatelessWidget {
   final int activeIndex;
@@ -129,14 +204,11 @@ class _Sidebar extends StatelessWidget {
       width: 180,
       decoration: const BoxDecoration(
         color: AppTheme.canvasSubtle,
-        border: Border(
-          right: BorderSide(color: AppTheme.borderDefault, width: 1),
-        ),
+        border: Border(right: BorderSide(color: AppTheme.borderDefault, width: 1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Logo / App Name ────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Row(
@@ -147,16 +219,9 @@ class _Sidebar extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppTheme.accentBlue.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppTheme.accentBlue.withValues(alpha: 0.4),
-                      width: 1,
-                    ),
+                    border: Border.all(color: AppTheme.accentBlue.withValues(alpha: 0.4), width: 1),
                   ),
-                  child: const Icon(
-                    Icons.pets_rounded,
-                    color: AppTheme.accentBlue,
-                    size: 16,
-                  ),
+                  child: const Icon(Icons.pets_rounded, color: AppTheme.accentBlue, size: 16),
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -171,26 +236,19 @@ class _Sidebar extends StatelessWidget {
               ],
             ),
           ),
-
           const Divider(height: 1, color: AppTheme.borderDefault),
           const SizedBox(height: 8),
 
-          // ── Top Nav Items ─────────────────────────────────────────────
-          ...List.generate(navItems.length - 1, (i) {
-            return _SidebarNavTile(
-              item: navItems[i],
-              isActive: activeIndex == i,
-              onTap: () => onNavTap(i),
-            );
-          }),
+          ...List.generate(navItems.length - 1, (i) => _SidebarNavTile(
+            item: navItems[i],
+            isActive: activeIndex == i,
+            onTap: () => onNavTap(i),
+          )),
 
-          // ── Spacer to push Setting + Avatar to bottom ─────────────────
           const Spacer(),
-
           const Divider(height: 1, color: AppTheme.borderDefault),
           const SizedBox(height: 8),
 
-          // ── Bottom Nav Item (Setting) ──────────────────────────────────
           _SidebarNavTile(
             item: navItems.last,
             isActive: activeIndex == navItems.length - 1,
@@ -199,13 +257,10 @@ class _Sidebar extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // ── User Avatar Row ───────────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: AppTheme.borderDefault, width: 1),
-              ),
+              border: Border(top: BorderSide(color: AppTheme.borderDefault, width: 1)),
             ),
             child: Row(
               children: [
@@ -215,20 +270,12 @@ class _Sidebar extends StatelessWidget {
                   child: Text(
                     username,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.fgDefault,
-                    ),
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.fgDefault),
                   ),
                 ),
                 GestureDetector(
                   onTap: onSignOut,
-                  child: const Icon(
-                    Icons.logout_rounded,
-                    size: 15,
-                    color: AppTheme.fgMuted,
-                  ),
+                  child: const Icon(Icons.logout_rounded, size: 15, color: AppTheme.fgMuted),
                 ),
               ],
             ),
@@ -246,11 +293,7 @@ class _SidebarNavTile extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
 
-  const _SidebarNavTile({
-    required this.item,
-    required this.isActive,
-    required this.onTap,
-  });
+  const _SidebarNavTile({required this.item, required this.isActive, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -261,24 +304,13 @@ class _SidebarNavTile extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
-          color: isActive
-              ? AppTheme.accentBlue.withValues(alpha: 0.12)
-              : Colors.transparent,
+          color: isActive ? AppTheme.accentBlue.withValues(alpha: 0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
-          border: isActive
-              ? Border.all(
-                  color: AppTheme.accentBlue.withValues(alpha: 0.25),
-                  width: 1,
-                )
-              : null,
+          border: isActive ? Border.all(color: AppTheme.accentBlue.withValues(alpha: 0.25), width: 1) : null,
         ),
         child: Row(
           children: [
-            Icon(
-              item.icon,
-              size: 16,
-              color: isActive ? AppTheme.accentBlue : AppTheme.fgMuted,
-            ),
+            Icon(item.icon, size: 16, color: isActive ? AppTheme.accentBlue : AppTheme.fgMuted),
             const SizedBox(width: 10),
             Text(
               item.label,

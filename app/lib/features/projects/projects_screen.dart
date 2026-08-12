@@ -62,121 +62,195 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       backgroundColor: AppTheme.canvasDefault,
       body: Column(
         children: [
-          // ── Top Bar (Header with Search & Filter) ────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: const BoxDecoration(
-              color: AppTheme.canvasSubtle,
-              border: Border(bottom: BorderSide(color: AppTheme.borderDefault, width: 1)),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Repositories',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.fgDefault,
-                  ),
+          // ── Top Bar (Header with Search & Filter) ───────────────────
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 540;
+              return Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 12 : 24,
+                  vertical: 12,
                 ),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppTheme.borderDefault,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: projectsAsync.when(
-                    data: (p) => Text(
-                      '${p.length}',
-                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.fgDefault),
-                    ),
-                    loading: () => const SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 1.5, color: AppTheme.fgMuted),
-                    ),
-                    error: (err, stack) => const SizedBox.shrink(),
-                  ),
+                decoration: const BoxDecoration(
+                  color: AppTheme.canvasSubtle,
+                  border: Border(bottom: BorderSide(color: AppTheme.borderDefault, width: 1)),
                 ),
-                const Spacer(),
-                // Filter Dropdown
-                Container(
-                  height: 32,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.canvasDefault,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppTheme.borderDefault),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedType,
-                      dropdownColor: AppTheme.canvasOverlay,
-                      style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgDefault),
-                      icon: const Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.fgMuted),
-                      items: ['All', 'Public', 'Private', 'Starred'].map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedType = val);
-                      },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Repositories',
+                          style: GoogleFonts.outfit(
+                            fontSize: isMobile ? 15 : 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.fgDefault,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.borderDefault,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: projectsAsync.when(
+                            data: (p) => Text(
+                              '${p.length}',
+                              style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.fgDefault),
+                            ),
+                            loading: () => const SizedBox(
+                              width: 12, height: 12,
+                              child: CircularProgressIndicator(strokeWidth: 1.5, color: AppTheme.fgMuted),
+                            ),
+                            error: (err, stack) => const SizedBox.shrink(),
+                          ),
+                        ),
+                        const Spacer(),
+                        if (!isMobile) ...[
+                          // Filter Dropdown (desktop)
+                          Container(
+                            height: 32,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.canvasDefault,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppTheme.borderDefault),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedType,
+                                dropdownColor: AppTheme.canvasOverlay,
+                                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgDefault),
+                                icon: const Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.fgMuted),
+                                items: ['All', 'Public', 'Private', 'Starred'].map((type) {
+                                  return DropdownMenuItem(value: type, child: Text(type));
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) setState(() => _selectedType = val);
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Search (desktop)
+                          SizedBox(
+                            width: 200,
+                            height: 32,
+                            child: TextField(
+                              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.fgDefault),
+                              decoration: InputDecoration(
+                                hintText: 'Find a repository…',
+                                hintStyle: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgSubtle),
+                                prefixIcon: const Icon(Icons.search, size: 14, color: AppTheme.fgSubtle),
+                                filled: true,
+                                fillColor: AppTheme.canvasDefault,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(color: AppTheme.borderDefault),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(color: AppTheme.borderDefault),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(color: AppTheme.accentBlue, width: 2),
+                                ),
+                              ),
+                              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        // Refresh Button
+                        InkWell(
+                          borderRadius: BorderRadius.circular(6),
+                          onTap: () => ref.refresh(projectsListProvider),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: AppTheme.canvasDefault,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppTheme.borderDefault),
+                            ),
+                            child: const Icon(Icons.refresh_rounded, size: 16, color: AppTheme.fgMuted),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Search Input
-                SizedBox(
-                  width: 240,
-                  height: 32,
-                  child: TextField(
-                    style: GoogleFonts.inter(fontSize: 13, color: AppTheme.fgDefault),
-                    decoration: InputDecoration(
-                      hintText: 'Find a repository…',
-                      hintStyle: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgSubtle),
-                      prefixIcon: const Icon(Icons.search, size: 14, color: AppTheme.fgSubtle),
-                      filled: true,
-                      fillColor: AppTheme.canvasDefault,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: AppTheme.borderDefault),
+                    if (isMobile) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          // Filter (mobile)
+                          Container(
+                            height: 36,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.canvasDefault,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppTheme.borderDefault),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedType,
+                                dropdownColor: AppTheme.canvasOverlay,
+                                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgDefault),
+                                icon: const Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.fgMuted),
+                                items: ['All', 'Public', 'Private', 'Starred'].map((type) {
+                                  return DropdownMenuItem(value: type, child: Text(type));
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) setState(() => _selectedType = val);
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Search (mobile - full remaining width)
+                          Expanded(
+                            child: SizedBox(
+                              height: 36,
+                              child: TextField(
+                                style: GoogleFonts.inter(fontSize: 13, color: AppTheme.fgDefault),
+                                decoration: InputDecoration(
+                                  hintText: 'Search…',
+                                  hintStyle: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgSubtle),
+                                  prefixIcon: const Icon(Icons.search, size: 14, color: AppTheme.fgSubtle),
+                                  filled: true,
+                                  fillColor: AppTheme.canvasDefault,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                    borderSide: const BorderSide(color: AppTheme.borderDefault),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                    borderSide: const BorderSide(color: AppTheme.borderDefault),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                    borderSide: const BorderSide(color: AppTheme.accentBlue, width: 2),
+                                  ),
+                                ),
+                                onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: AppTheme.borderDefault),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: AppTheme.accentBlue, width: 2),
-                      ),
-                    ),
-                    onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
-                  ),
+                    ],
+                  ],
                 ),
-                const SizedBox(width: 10),
-                // Refresh Button
-                InkWell(
-                  borderRadius: BorderRadius.circular(6),
-                  onTap: () => ref.refresh(projectsListProvider),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppTheme.canvasDefault,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppTheme.borderDefault),
-                    ),
-                    child: const Icon(Icons.refresh_rounded, size: 16, color: AppTheme.fgMuted),
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
 
           // ── Repo List View ───────────────────────────────────────────
