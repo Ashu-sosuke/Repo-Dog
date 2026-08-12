@@ -60,6 +60,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._dio) : super(AuthState.initial()) {
     _checkInitialState();
+    FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user != null && !state.isAuthenticated) {
+        debugPrint('[Auth] authStateChanges listener triggered on mobile: ${user.email}');
+        state = state.copyWith(
+          isAuthenticated: true,
+          isLoading: false,
+          firebaseUser: user,
+        );
+        fetchUserProfile();
+      }
+    });
   }
 
   Future<void> _checkInitialState() async {
