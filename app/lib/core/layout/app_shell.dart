@@ -95,15 +95,14 @@ class AppShell extends ConsumerWidget {
           titleSpacing: 16,
           title: Row(
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppTheme.accentBlue.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: AppTheme.accentBlue.withValues(alpha: 0.4)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.asset(
+                  'assets/logo.png',
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.cover,
                 ),
-                child: const Icon(Icons.pets_rounded, color: AppTheme.accentBlue, size: 16),
               ),
               const SizedBox(width: 8),
               Text(
@@ -213,15 +212,14 @@ class _Sidebar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Row(
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppTheme.accentBlue.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppTheme.accentBlue.withValues(alpha: 0.4), width: 1),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.cover,
                   ),
-                  child: const Icon(Icons.pets_rounded, color: AppTheme.accentBlue, size: 16),
                 ),
                 const SizedBox(width: 10),
                 Text(

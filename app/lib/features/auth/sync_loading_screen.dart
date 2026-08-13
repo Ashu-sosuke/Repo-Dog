@@ -216,9 +216,6 @@ class _SyncLoadingScreenState extends ConsumerState<SyncLoadingScreen>
               height: 82,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [AppTheme.primaryColor, Color(0xFF4F46E5)],
-                ),
                 boxShadow: [
                   BoxShadow(
                     color: AppTheme.primaryColor.withValues(alpha: 0.4),
@@ -227,10 +224,14 @@ class _SyncLoadingScreenState extends ConsumerState<SyncLoadingScreen>
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.hub_rounded,
-                size: 38,
-                color: Colors.white,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(41),
+                child: Image.asset(
+                  'assets/logo.png',
+                  width: 82,
+                  height: 82,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
