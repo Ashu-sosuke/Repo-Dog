@@ -9,14 +9,14 @@
 </p>
 
 <p align="center">
+  <a href="https://repo-dog.vercel.app/">
+    <img src="https://img.shields.io/badge/Web_App-Live_on_Vercel-000000?style=for-the-badge&logo=vercel" alt="Live on Vercel">
+  </a>
   <a href="https://github.com/Ashu-sosuke/Repo-Dog/releases/latest">
     <img src="https://img.shields.io/github/v/release/Ashu-sosuke/Repo-Dog?style=for-the-badge&color=3FB950&label=Android%20APK" alt="Android Release APK">
   </a>
   <a href="https://github.com/Ashu-sosuke/Repo-Dog/stargazers">
     <img src="https://img.shields.io/github/stars/Ashu-sosuke/Repo-Dog?style=for-the-badge&color=58A6FF" alt="GitHub Stars">
-  </a>
-  <a href="https://github.com/Ashu-sosuke/Repo-Dog/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/Ashu-sosuke/Repo-Dog?style=for-the-badge&color=8B949E" alt="License">
   </a>
 </p>
 
@@ -32,9 +32,8 @@ Repo Dog unifies your entire GitHub footprint — profile metadata, GitHub profi
 
 ## 🌐 Live Deployments & Downloads
 
+- 🌐 **Web Dashboard (Vercel)**: [https://repo-dog.vercel.app](https://repo-dog.vercel.app/)
 - 📱 **Android App (APK)**: [Download Latest Release APK](https://github.com/Ashu-sosuke/Repo-Dog/releases/latest)
-- 🌐 **Web Dashboard (Vercel)**: Deployed with Flutter Web
-- ⚡ **Backend Service (Render)**: [https://repo-dog.onrender.com](https://repo-dog.onrender.com)
 
 ---
 
