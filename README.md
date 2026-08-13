@@ -2,7 +2,7 @@
   <img src="logo.png" width="140" alt="Repo Dog Logo" style="border-radius: 24px;">
 </p>
 
-<h1 align="center">🚀 Repo Dog</h1>
+<h1 align="center">Repo Dog</h1>
 
 <p align="center">
   <b>Unified GitHub Activity Dashboard & Developer Workspace</b>
@@ -20,20 +20,31 @@
   </a>
 </p>
 
+<p align="center">
+  <a href="#-overview">Overview</a> •
+  <a href="#-live-deployments--downloads">Live Demo</a> •
+  <a href="#-key-features">Features</a> •
+  <a href="#%EF%B8%8F-technology-stack">Tech Stack</a> •
+  <a href="#-quick-start-guide">Quick Start</a> •
+  <a href="#-production-environment-setup-backendenv">Setup</a>
+</p>
+
 ---
 
 ## 📌 Overview
 
-**Repo Dog** is a modern, cross-platform developer workspace and GitHub tracker built with **Flutter**, **FastAPI**, **Supabase**, **GitHub REST & GraphQL APIs**, and **Firebase Authentication**.
+**Repo Dog** is a modern, cross-platform developer workspace and GitHub activity tracker built with **Flutter**, **FastAPI**, **Supabase**, the **GitHub REST & GraphQL APIs**, and **Firebase Authentication**.
 
-Repo Dog unifies your entire GitHub footprint — profile metadata, GitHub profile README, repository lists, branch intelligence, commit histories, 53-week contribution heatmaps, PRs, CI/CD workflow runs, and repository READMEs — into a single, high-performance GitHub dark-themed dashboard.
+It unifies your entire GitHub footprint — profile metadata, profile README, repository lists, branch intelligence, commit history, contribution heatmaps, pull requests, CI/CD workflow runs, and repository READMEs — into a single, high-performance, GitHub-dark-themed dashboard.
 
 ---
 
 ## 🌐 Live Deployments & Downloads
 
-- 🌐 **Web Dashboard (Vercel)**: [https://repo-dog.vercel.app](https://repo-dog.vercel.app/)
-- 📱 **Android App (APK)**: [Download Latest Release APK](https://github.com/Ashu-sosuke/Repo-Dog/releases/latest)
+| Platform | Link |
+| :--- | :--- |
+| 🌐 Web Dashboard | [repo-dog.vercel.app](https://repo-dog.vercel.app/) |
+| 📱 Android APK | [Download Latest Release](https://github.com/Ashu-sosuke/Repo-Dog/releases/latest) |
 
 ---
 
@@ -53,24 +64,41 @@ graph LR
 
 ## ✨ Key Features
 
-- **⚡ Ultra-Fast Double-Layer Caching Engine**:
-  - **Backend TTL Cache (`SimpleTTLCache`)**: 5-minute in-memory response cache bringing API response times down to **<3ms**.
-  - **Frontend State Retention (`ref.keepAlive()`)**: Instant tab switching across **Dashboard**, **All Repos**, **Description**, and **Settings**.
-  - **Smart Invalidation**: Triggers clean cache purges automatically when a GitHub sync is executed.
-- **🎨 GitHub Dark Aesthetic**: Tailored GitHub Dark theme (`#0D1117` canvas, `#161B22` sidebar, `#30363D` borders, `#58A6FF` accent blue, `#3FB950` contribution green).
-- **🔑 1-Step GitHub Sign-In**: Seamless authentication via Firebase GitHub OAuth with PAT & Dev fallback modes across Web, Android, and Desktop.
-- **📈 Live GraphQL Contribution Heatmap**: Fetches exact contribution calendar from GitHub GraphQL API (`contributionsCollection.contributionCalendar`), displaying total contributions and daily contribution intensity grid.
-- **📦 All Repositories Explorer**: Filter repositories by **All**, **Public**, **Private**, or **Starred** with instant search, primary language dots, star/fork metrics, and relative update timestamps (*Updated 17m ago*).
-- **📖 Live Repository README.md Viewer**: Displays full formatted Markdown for any repository directly inside the Overview tab.
-- **🌱 Deduplicated Branch Intelligence**: Real-time list of repository branches sorted with Default branch first, exact UTC commit timestamps, and stale branch detection (`STALE >30d`).
-- **👤 User Profile & Description (`/description`)**: Renders full GitHub profile metadata alongside your live **GitHub Profile README.md** (`username/username`).
-- **⚙️ Active Settings Workspace (`/settings`)**:
-  - **Force Re-Sync Engine**: Interactive manual sync trigger with live progress feedback.
-  - **Background Sync Frequency**: Polling interval configuration (`15 Mins`, `1 Hour`, `6 Hours`, `Manual Only`).
-  - **Stale Branch Threshold Slider**: Adjustable cutoff from `7` to `90` days.
-  - **Live API Health Monitor**: Real-time server status badge (`🟢 API Online`).
-  - **Sign Out Confirmation**: Modal dialog protection against accidental logouts.
-- **🔒 Enterprise Security**: GitHub OAuth access tokens are encrypted at rest using **Fernet symmetric encryption** before storing in Supabase PostgreSQL.
+### ⚡ Ultra-Fast Double-Layer Caching Engine
+- **Backend TTL Cache** (`SimpleTTLCache`) — 5-minute in-memory response cache, bringing API response times down to **<3ms**.
+- **Frontend State Retention** (`ref.keepAlive()`) — instant tab switching across **Dashboard**, **All Repos**, **Description**, and **Settings**.
+- **Smart Invalidation** — automatic cache purges triggered on every GitHub sync.
+
+### 🎨 GitHub Dark Aesthetic
+Tailored GitHub Dark design system — `#0D1117` canvas, `#161B22` sidebar, `#30363D` borders, `#58A6FF` accent blue, `#3FB950` contribution green.
+
+### 🔑 1-Step GitHub Sign-In
+Seamless authentication via Firebase GitHub OAuth, with PAT and Dev fallback modes across Web, Android, and Desktop.
+
+### 📈 Live GraphQL Contribution Heatmap
+Fetches the exact contribution calendar from the GitHub GraphQL API (`contributionsCollection.contributionCalendar`), displaying total contributions and a daily contribution-intensity grid.
+
+### 📦 All Repositories Explorer
+Filter repositories by **All**, **Public**, **Private**, or **Starred**, with instant search, primary-language dots, star/fork metrics, and relative update timestamps (*Updated 17m ago*).
+
+### 📖 Live Repository README Viewer
+Renders full formatted Markdown for any repository directly inside the Overview tab.
+
+### 🌱 Deduplicated Branch Intelligence
+Real-time branch listing with the default branch pinned first, exact UTC commit timestamps, and stale-branch detection (`STALE >30d`).
+
+### 👤 User Profile & Description (`/description`)
+Displays full GitHub profile metadata alongside your live **GitHub Profile README** (`username/username`).
+
+### ⚙️ Active Settings Workspace (`/settings`)
+- **Force Re-Sync Engine** — manual sync trigger with live progress feedback.
+- **Background Sync Frequency** — configurable polling (`15 Mins`, `1 Hour`, `6 Hours`, `Manual Only`).
+- **Stale Branch Threshold Slider** — adjustable cutoff from `7` to `90` days.
+- **Live API Health Monitor** — real-time server status badge (`🟢 API Online`).
+- **Sign Out Confirmation** — modal dialog protection against accidental logouts.
+
+### 🔒 Enterprise Security
+GitHub OAuth access tokens are encrypted at rest using **Fernet symmetric encryption** before being stored in Supabase PostgreSQL.
 
 ---
 
@@ -80,9 +108,10 @@ graph LR
 | :--- | :--- |
 | **Frontend** | Flutter 3.x, Flutter Riverpod, GoRouter, Dio, Google Fonts (Outfit & Inter), Flutter Markdown |
 | **Backend** | Python 3.11+, FastAPI, Uvicorn, httpx, Cryptography (Fernet), In-Memory TTL Cache |
-| **APIs** | GitHub REST API v3 & GitHub GraphQL API v4 |
+| **APIs** | GitHub REST API v3, GitHub GraphQL API v4 |
 | **Database** | Supabase PostgreSQL (RLS-enabled schema) |
 | **Auth** | Firebase Auth (GitHub OAuth Provider) |
+| **Deployment** | Vercel (Web), Render (Backend) |
 
 ---
 
@@ -106,21 +135,21 @@ Repo Dog/
 │   │   │   ├── profile/        # DescriptionScreen (Profile Metadata & Profile README)
 │   │   │   ├── projects/       # ProjectsScreen & ProjectDetailScreen (README & Branches)
 │   │   │   └── settings/       # SettingsScreen (Sync Engine, Preferences, Stale Rules)
-│   │   └── firebase_options.dart # Auto-generated FlutterFire configuration
+│   │   └── firebase_options.dart  # Auto-generated FlutterFire configuration
 │   └── pubspec.yaml            # Flutter dependencies
 │
-├── backend/                    # FastAPI Backend Service
+├── backend/                    # FastAPI backend service
 │   ├── app/
-│   │   ├── core/               # Config, Cache (TTL Engine), Security (Fernet), Supabase Client
-│   │   ├── routers/            # Auth, Dashboard, Projects, User, Settings, Sync API endpoints
-│   │   ├── services/           # GitHubSyncService (REST & GraphQL sync engine)
-│   │   └── main.py             # FastAPI entrypoint & CORS configuration
+│   │   ├── core/                # Config, Cache (TTL Engine), Security (Fernet), Supabase Client
+│   │   ├── routers/              # Auth, Dashboard, Projects, User, Settings, Sync endpoints
+│   │   ├── services/            # GitHubSyncService (REST & GraphQL sync engine)
+│   │   └── main.py              # FastAPI entrypoint & CORS configuration
 │   ├── .env                    # Environment configuration
 │   ├── render.yaml             # Render deployment configuration
 │   └── requirements.txt        # Python dependencies
 │
 ├── supabase/
-│   └── migrations/             # Initial database schema SQL & RLS policies
+│   └── migrations/             # Database schema SQL & RLS policies
 ├── vercel.json                 # Vercel deployment configuration for Flutter Web
 └── logo.png                    # App branding logo
 ```
@@ -132,7 +161,6 @@ Repo Dog/
 ### 1. Backend Setup (FastAPI)
 
 ```powershell
-# Navigate to backend directory
 cd backend
 
 # Install dependencies
@@ -145,7 +173,6 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ### 2. Frontend Setup (Flutter)
 
 ```powershell
-# Navigate to app directory
 cd app
 
 # Install dependencies
@@ -156,65 +183,78 @@ flutter pub get
 
 ## 📱 Running Across Platforms
 
-### 🌐 Web (Chrome)
+<table>
+<tr>
+<td valign="top">
+
+**🌐 Web (Chrome)**
 ```powershell
 cd app
 flutter run -d chrome
 ```
 
-### 📱 Android Device
-```powershell
-# Forward port 8000 from phone over USB
-adb reverse tcp:8000 tcp:8000
+</td>
+<td valign="top">
 
+**📱 Android Device**
+```powershell
+adb reverse tcp:8000 tcp:8000
 cd app
 flutter run -d android
 ```
 
-### 💻 Windows Desktop
+</td>
+<td valign="top">
+
+**💻 Windows Desktop**
 ```powershell
 cd app
 flutter run -d windows
 ```
 
+</td>
+</tr>
+</table>
+
 ---
 
 ## 📦 Building Production Releases
 
-### 📱 Android APK
+**Android APK**
 ```powershell
 cd app
 flutter build apk --release
-# Built file: app/build/app/outputs/flutter-apk/app-release.apk
+# Output: app/build/app/outputs/flutter-apk/app-release.apk
 ```
 
-### 🌐 Web (Vercel Deploy)
+**Web (Vercel Deploy)**
 ```powershell
 cd app
 flutter build web --release
 
-# Deploy via Vercel CLI from project root
 cd ..
 npx vercel --prod
 ```
 
-### 💻 Windows Desktop (.exe)
+**Windows Desktop (.exe)**
 ```powershell
 cd app
 flutter build windows --release
-# Built binary: app/build/windows/x64/runner/Release/app.exe
+# Output: app/build/windows/x64/runner/Release/app.exe
 ```
+
+---
 
 ## 🔒 Production Environment Setup (`backend/.env`)
 
-Repo Dog is production-ready. For local development or deploying your own instance, copy `backend/.env.example` to `backend/.env` and supply your backend credentials:
+Repo Dog is production-ready. For local development or deploying your own instance, copy `backend/.env.example` to `backend/.env` and supply your own credentials:
 
 ```env
 # ── Firebase Admin SDK Configuration ────────────────────────────────
 FIREBASE_PROJECT_ID=repo-dog
 FIREBASE_SERVICE_ACCOUNT_JSON=serviceAccountKey.json
 
-# ── Supabase PostgreSQL Database Credentials ─────────────────────────
+# ── Supabase PostgreSQL Database Credentials ────────────────────────
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 
@@ -222,10 +262,19 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 GITHUB_OAUTH_CLIENT_ID=your-github-client-id
 GITHUB_OAUTH_CLIENT_SECRET=your-github-client-secret
 
-# ── Token Encryption Key (Fernet AES-256 Symmetric Encryption) ─────
-# Generate a key using: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# ── Token Encryption Key (Fernet AES-256 Symmetric Encryption) ──────
+# Generate one with:
+# python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 TOKEN_ENCRYPTION_KEY=your-32-byte-fernet-key
 ```
+
+> ⚠️ Never commit your `.env` file or real credentials to version control.
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome. Feel free to check the [issues page](https://github.com/Ashu-sosuke/Repo-Dog/issues) or open a pull request.
 
 ---
 
