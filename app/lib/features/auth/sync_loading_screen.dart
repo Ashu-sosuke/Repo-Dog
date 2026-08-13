@@ -215,7 +215,7 @@ class _SyncLoadingScreenState extends ConsumerState<SyncLoadingScreen>
               width: 82,
               height: 82,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
                     color: AppTheme.primaryColor.withValues(alpha: 0.4),
@@ -225,7 +225,7 @@ class _SyncLoadingScreenState extends ConsumerState<SyncLoadingScreen>
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(41),
+                borderRadius: BorderRadius.circular(20),
                 child: Image.asset(
                   'assets/logo.png',
                   width: 82,
