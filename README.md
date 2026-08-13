@@ -205,21 +205,26 @@ flutter build windows --release
 # Built binary: app/build/windows/x64/runner/Release/app.exe
 ```
 
----
+## 🔒 Production Environment Setup (`backend/.env`)
 
-## 🔒 Environment Configuration (`backend/.env`)
+Repo Dog is production-ready. For local development or deploying your own instance, copy `backend/.env.example` to `backend/.env` and supply your backend credentials:
 
 ```env
+# ── Firebase Admin SDK Configuration ────────────────────────────────
 FIREBASE_PROJECT_ID=repo-dog
 FIREBASE_SERVICE_ACCOUNT_JSON=serviceAccountKey.json
 
+# ── Supabase PostgreSQL Database Credentials ─────────────────────────
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 
+# ── GitHub OAuth 2.0 Provider Credentials ───────────────────────────
 GITHUB_OAUTH_CLIENT_ID=your-github-client-id
 GITHUB_OAUTH_CLIENT_SECRET=your-github-client-secret
 
-TOKEN_ENCRYPTION_KEY=your-fernet-encryption-key
+# ── Token Encryption Key (Fernet AES-256 Symmetric Encryption) ─────
+# Generate a key using: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+TOKEN_ENCRYPTION_KEY=your-32-byte-fernet-key
 ```
 
 ---
