@@ -1,8 +1,40 @@
-# 🚀 Repo Dog
+<p align="center">
+  <img src="logo.png" width="140" alt="Repo Dog Logo" style="border-radius: 24px;">
+</p>
 
-A modern, cross-platform developer workspace and GitHub tracker built with **Flutter**, **FastAPI**, **Supabase**, **GitHub REST & GraphQL APIs**, and **Firebase Authentication**.
+<h1 align="center">🚀 Repo Dog</h1>
 
-Repo Dog unifies your entire GitHub footprint — profile metadata, profile README, repository lists, branch intelligence, commit histories, contribution activity heatmaps, PRs, CI/CD runs, and repository READMEs — into a single, high-performance GitHub dark-themed dashboard.
+<p align="center">
+  <b>Unified GitHub Activity Dashboard & Developer Workspace</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Ashu-sosuke/Repo-Dog/releases/latest">
+    <img src="https://img.shields.io/github/v/release/Ashu-sosuke/Repo-Dog?style=for-the-badge&color=3FB950&label=Android%20APK" alt="Android Release APK">
+  </a>
+  <a href="https://github.com/Ashu-sosuke/Repo-Dog/stargazers">
+    <img src="https://img.shields.io/github/stars/Ashu-sosuke/Repo-Dog?style=for-the-badge&color=58A6FF" alt="GitHub Stars">
+  </a>
+  <a href="https://github.com/Ashu-sosuke/Repo-Dog/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/Ashu-sosuke/Repo-Dog?style=for-the-badge&color=8B949E" alt="License">
+  </a>
+</p>
+
+---
+
+## 📌 Overview
+
+**Repo Dog** is a modern, cross-platform developer workspace and GitHub tracker built with **Flutter**, **FastAPI**, **Supabase**, **GitHub REST & GraphQL APIs**, and **Firebase Authentication**.
+
+Repo Dog unifies your entire GitHub footprint — profile metadata, GitHub profile README, repository lists, branch intelligence, commit histories, 53-week contribution heatmaps, PRs, CI/CD workflow runs, and repository READMEs — into a single, high-performance GitHub dark-themed dashboard.
+
+---
+
+## 🌐 Live Deployments & Downloads
+
+- 📱 **Android App (APK)**: [Download Latest Release APK](https://github.com/Ashu-sosuke/Repo-Dog/releases/latest)
+- 🌐 **Web Dashboard (Vercel)**: Deployed with Flutter Web
+- ⚡ **Backend Service (Render)**: [https://repo-dog.onrender.com](https://repo-dog.onrender.com)
 
 ---
 
@@ -10,8 +42,8 @@ Repo Dog unifies your entire GitHub footprint — profile metadata, profile READ
 
 ```mermaid
 graph LR
-    A[Flutter Client App] -- "HTTP + Firebase JWT" --> B[FastAPI Backend :8000]
-    B -- "In-Memory TTL Cache (<3ms)" --> B
+    A[Flutter Client App<br/>Web / Android / Windows / macOS] -- "HTTP + Firebase JWT" --> B[FastAPI Backend :8000<br/>Render Cloud]
+    B -- "SimpleTTLCache (<3ms)" --> B
     B -- "Supabase Client SDK" --> C[(Supabase PostgreSQL)]
     B -- "httpx (REST & GraphQL API)" --> D[GitHub API v3 & GraphQL v4]
     A -- "1-Step OAuth" --> E[Firebase Auth]
@@ -24,22 +56,22 @@ graph LR
 
 - **⚡ Ultra-Fast Double-Layer Caching Engine**:
   - **Backend TTL Cache (`SimpleTTLCache`)**: 5-minute in-memory response cache bringing API response times down to **<3ms**.
-  - **Frontend State Retention (`ref.keepAlive()`)**: 0ms instant tab switching across **DashBoard**, **All Repo**, **Description**, and **Setting**.
+  - **Frontend State Retention (`ref.keepAlive()`)**: Instant tab switching across **Dashboard**, **All Repos**, **Description**, and **Settings**.
   - **Smart Invalidation**: Triggers clean cache purges automatically when a GitHub sync is executed.
-- **🎨 GitHub Dark UI Aesthetic**: Tailored GitHub Dark theme (`#0D1117` canvas, `#161B22` sidebar, `#30363D` borders, `#58A6FF` accent blue, `#3FB950` contribution green).
-- **🔑 1-Step GitHub Sign-In**: Seamless authentication via Firebase GitHub OAuth across Web, Android, and Desktop.
-- **📈 Real GraphQL Contribution Heatmap**: Fetches exact contribution calendar from GitHub GraphQL API (`contributionsCollection.contributionCalendar`), displaying total contributions (*e.g., 249 contributions in the last year*) and daily contribution green intensity grid.
+- **🎨 GitHub Dark Aesthetic**: Tailored GitHub Dark theme (`#0D1117` canvas, `#161B22` sidebar, `#30363D` borders, `#58A6FF` accent blue, `#3FB950` contribution green).
+- **🔑 1-Step GitHub Sign-In**: Seamless authentication via Firebase GitHub OAuth with PAT & Dev fallback modes across Web, Android, and Desktop.
+- **📈 Live GraphQL Contribution Heatmap**: Fetches exact contribution calendar from GitHub GraphQL API (`contributionsCollection.contributionCalendar`), displaying total contributions and daily contribution intensity grid.
 - **📦 All Repositories Explorer**: Filter repositories by **All**, **Public**, **Private**, or **Starred** with instant search, primary language dots, star/fork metrics, and relative update timestamps (*Updated 17m ago*).
 - **📖 Live Repository README.md Viewer**: Displays full formatted Markdown for any repository directly inside the Overview tab.
 - **🌱 Deduplicated Branch Intelligence**: Real-time list of repository branches sorted with Default branch first, exact UTC commit timestamps, and stale branch detection (`STALE >30d`).
-- **👤 User Profile & Description (`/description`)**: Renders full GitHub profile metadata (*display name, bio, follower/following counts, social & website links*) alongside your special **GitHub Profile README.md** (`username/username`).
+- **👤 User Profile & Description (`/description`)**: Renders full GitHub profile metadata alongside your live **GitHub Profile README.md** (`username/username`).
 - **⚙️ Active Settings Workspace (`/settings`)**:
   - **Force Re-Sync Engine**: Interactive manual sync trigger with live progress feedback.
-  - **Background Sync Frequency**: Switch polling intervals (`Every 15 Mins`, `1 Hour`, `6 Hours`, `Manual Only`).
+  - **Background Sync Frequency**: Polling interval configuration (`15 Mins`, `1 Hour`, `6 Hours`, `Manual Only`).
   - **Stale Branch Threshold Slider**: Adjustable cutoff from `7` to `90` days.
   - **Live API Health Monitor**: Real-time server status badge (`🟢 API Online`).
   - **Sign Out Confirmation**: Modal dialog protection against accidental logouts.
-- **🔒 Enterprise Security**: GitHub OAuth access tokens are encrypted at rest using Fernet symmetric encryption before storing in Supabase.
+- **🔒 Enterprise Security**: GitHub OAuth access tokens are encrypted at rest using **Fernet symmetric encryption** before storing in Supabase PostgreSQL.
 
 ---
 
@@ -59,12 +91,13 @@ graph LR
 
 ```
 Repo Dog/
-├── app/                        # Flutter multi-platform application
-│   ├── android/                # Android native project & google-services.json
+├── app/                        # Flutter multi-platform application (Web, Android, Desktop)
+│   ├── android/                # Android native configuration & launcher icons
+│   ├── assets/                 # App brand assets & logo.png
 │   ├── lib/
 │   │   ├── core/
 │   │   │   ├── constants/      # ApiConstants (Base URL & Endpoint Routes)
-│   │   │   ├── layout/         # AppShell (Persistent GitHub Dark Sidebar & Modal Confirmations)
+│   │   │   ├── layout/         # AppShell (Responsive Navigation Sidebar & Bottom Bar)
 │   │   │   ├── network/        # Dio Client & Firebase Auth Interceptor
 │   │   │   ├── router/         # GoRouter navigation & route guards
 │   │   │   └── theme/          # GitHub Dark Theme design system
@@ -84,10 +117,13 @@ Repo Dog/
 │   │   ├── services/           # GitHubSyncService (REST & GraphQL sync engine)
 │   │   └── main.py             # FastAPI entrypoint & CORS configuration
 │   ├── .env                    # Environment configuration
+│   ├── render.yaml             # Render deployment configuration
 │   └── requirements.txt        # Python dependencies
 │
-└── supabase/
-    └── migrations/             # Initial database schema SQL
+├── supabase/
+│   └── migrations/             # Initial database schema SQL & RLS policies
+├── vercel.json                 # Vercel deployment configuration for Flutter Web
+└── logo.png                    # App branding logo
 ```
 
 ---
@@ -130,7 +166,7 @@ flutter run -d chrome
 ### 📱 Android Device
 ```powershell
 # Forward port 8000 from phone over USB
-& "C:\Users\15bha\AppData\Local\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000
+adb reverse tcp:8000 tcp:8000
 
 cd app
 flutter run -d android
@@ -140,6 +176,34 @@ flutter run -d android
 ```powershell
 cd app
 flutter run -d windows
+```
+
+---
+
+## 📦 Building Production Releases
+
+### 📱 Android APK
+```powershell
+cd app
+flutter build apk --release
+# Built file: app/build/app/outputs/flutter-apk/app-release.apk
+```
+
+### 🌐 Web (Vercel Deploy)
+```powershell
+cd app
+flutter build web --release
+
+# Deploy via Vercel CLI from project root
+cd ..
+npx vercel --prod
+```
+
+### 💻 Windows Desktop (.exe)
+```powershell
+cd app
+flutter build windows --release
+# Built binary: app/build/windows/x64/runner/Release/app.exe
 ```
 
 ---
@@ -158,3 +222,9 @@ GITHUB_OAUTH_CLIENT_SECRET=your-github-client-secret
 
 TOKEN_ENCRYPTION_KEY=your-fernet-encryption-key
 ```
+
+---
+
+<p align="center">
+  Crafted with ❤️ for developers by <a href="https://github.com/Ashu-sosuke">Ashu-sosuke</a>
+</p>
