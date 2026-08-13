@@ -225,5 +225,6 @@ TOKEN_ENCRYPTION_KEY=your-fernet-encryption-key
 ---
 
 <p align="center">
-  Crafted with ❤️ for developers by <a href="https://github.com/Ashu-sosuke">Ashu-sosuke</a>
+  <b>Repo Dog</b> — Designed & Developed by <a href="https://github.com/Ashu-sosuke"><b>Ashutosh Kumar</b></a><br>
+  <sub>Empowering developers with unified GitHub workspace intelligence & real-time telemetry.</sub>
 </p>
