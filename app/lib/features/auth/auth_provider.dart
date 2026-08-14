@@ -191,7 +191,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (msg.contains('connection timeout') || msg.contains('connectTimeout') || msg.contains('receiveTimeout')) {
         msg = 'Server was sleeping (Render Free Tier cold start). Now awake! Please tap "Sign in with GitHub" again.';
       } else if (msg.contains('INVALID_APP_ID')) {
-        msg = 'Android Firebase App ID is not registered yet.\nPlease use "Dev Demo Mode (Fast API Direct)" below to test on mobile!';
+        msg = 'Android Firebase App ID is not registered yet.\nPlease use Personal Access Token (PAT) below to sign in!';
+      } else if (msg.contains('missing initial state') || msg.contains('sessionStorage') || msg.contains('storage-partitioned') || msg.contains('initial state')) {
+        msg = 'Mobile browser blocked storage session.\nPlease use "Sign in with Personal Access Token (PAT)" below!';
       }
       state = state.copyWith(
         isLoading: false,
