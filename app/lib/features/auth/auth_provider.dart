@@ -59,11 +59,25 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final Dio _dio;
 
+  /// Guards against authStateChanges firing mid sign-in flow and
+  /// prematurely redirecting to dashboard before the backend callback
+  /// and sync have completed.
+  bool _isSigningIn = false;
+
   AuthNotifier(this._dio) : super(AuthState.initial()) {
     _checkInitialState();
+
+    // FIX #2: Only allow authStateChanges to drive navigation when we are NOT
+    // inside an active signInWithGitHub() call. On Android, this listener fires
+    // BEFORE signInWithProvider() returns its Future, which previously caused
+    // the router to redirect to /dashboard before the backend callback posted.
     FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (_isSigningIn) {
+        debugPrint('[Auth] authStateChanges suppressed — sign-in flow in progress');
+        return;
+      }
       if (user != null && !state.isAuthenticated) {
-        debugPrint('[Auth] authStateChanges listener triggered on mobile: ${user.email}');
+        debugPrint('[Auth] authStateChanges: restoring session for ${user.email}');
         state = state.copyWith(
           isAuthenticated: true,
           isLoading: false,
@@ -84,58 +98,84 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> signInWithGitHub() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
+
+    // FIX #2: Raise flag so authStateChanges listener does not interfere.
+    _isSigningIn = true;
+
     try {
-      // Sign out first to force GitHub to issue a fresh OAuth access token.
-      // On Flutter Web, Firebase caches the session and returns null accessToken
-      // on subsequent sign-ins without a fresh consent flow.
-      await FirebaseAuth.instance.signOut();
+      // FIX #3: Removed the pre-signOut() call.
+      // On Web, signing out first forced a fresh consent flow.
+      // On Android, signOut() triggered authStateChanges(user=null) and then
+      // immediately signInWithProvider caused a race condition between the
+      // listener resetting state and the sign-in flow updating state.
+      // The provider's fresh Chrome Custom Tab already guarantees a new token.
 
       final githubProvider = GithubAuthProvider();
       githubProvider.addScope('repo');
       githubProvider.addScope('read:user');
-      githubProvider.setCustomParameters({'prompt': 'consent'});
+      // NOTE: 'prompt: consent' is a Google/OIDC parameter — GitHub ignores it.
+      // Removed to keep the OAuth parameters clean.
 
       UserCredential userCredential;
       if (kIsWeb) {
         userCredential = await FirebaseAuth.instance.signInWithPopup(githubProvider).timeout(
-          const Duration(seconds: 45),
-          onTimeout: () => throw TimeoutException('Sign-in operation timed out. Please try again.'),
+          const Duration(seconds: 60),
+          onTimeout: () => throw TimeoutException('Sign-in timed out. Please try again.'),
         );
       } else {
         userCredential = await FirebaseAuth.instance.signInWithProvider(githubProvider).timeout(
-          const Duration(seconds: 45),
-          onTimeout: () => throw TimeoutException('Sign-in operation timed out. Please try again.'),
+          const Duration(seconds: 60),
+          onTimeout: () => throw TimeoutException('Sign-in timed out. Please try again.'),
         );
       }
 
-      // Extract GitHub access token from OAuth credential
+      // FIX #4: Wait for Firebase session to fully propagate so that
+      // FirebaseTokenInterceptor finds a non-null currentUser and attaches
+      // the real ID token instead of falling back to the mock dev token.
+      User? firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        // Poll briefly for currentUser to appear (Android propagation delay).
+        for (int i = 0; i < 10; i++) {
+          await Future.delayed(const Duration(milliseconds: 200));
+          firebaseUser = FirebaseAuth.instance.currentUser;
+          if (firebaseUser != null) break;
+        }
+      }
+      debugPrint('[Auth] Firebase user ready: ${firebaseUser?.uid}');
+
+      // FIX #1: Extract GitHub access token from OAuthCredential.
+      // On Web (signInWithPopup) this is populated. On Android (signInWithProvider)
+      // the Firebase SDK may return null for accessToken — this is a known limitation
+      // of the Chrome Custom Tab flow in firebase_auth 5.x on Android.
+      // We proceed without it; the backend stores any valid token if provided.
       String? accessToken;
       final cred = userCredential.credential;
       if (cred is OAuthCredential) {
         accessToken = cred.accessToken;
-        debugPrint('[Auth] OAuthCredential accessToken: ${accessToken != null ? "OK (${accessToken.length} chars)" : "NULL"}');
+        debugPrint('[Auth] OAuthCredential accessToken: ${accessToken != null ? "OK (${accessToken.length} chars)" : "NULL — Android limitation, proceeding without it"}');
       }
 
       // Log additional user info for debugging
       final profile = userCredential.additionalUserInfo?.profile;
       debugPrint('[Auth] GitHub username: ${userCredential.additionalUserInfo?.username}');
       debugPrint('[Auth] GitHub user ID: ${profile?['id']}');
-      debugPrint('[Auth] Firebase UID: ${userCredential.user?.uid}');
+      debugPrint('[Auth] Firebase UID: ${firebaseUser?.uid}');
 
       // 1. Build callback payload
       final Map<String, dynamic> callbackData = {
         'github_user_id': profile?['id'],
         'github_username': userCredential.additionalUserInfo?.username,
-        'email': userCredential.user?.email,
-        'display_name': userCredential.user?.displayName,
-        'avatar_url': userCredential.user?.photoURL,
+        'email': firebaseUser?.email,
+        'display_name': firebaseUser?.displayName,
+        'avatar_url': firebaseUser?.photoURL,
         'scopes': ['repo', 'read:user'],
       };
       if (accessToken != null && accessToken.isNotEmpty) {
         callbackData['github_access_token'] = accessToken;
       }
 
-      // 2. Post callback to backend (updates user record & encrypted token if provided)
+      // 2. Post callback to backend (updates user record & encrypted token if provided).
+      // FirebaseTokenInterceptor will now find a valid currentUser because we waited above.
       debugPrint('[Auth] Posting auth callback to backend...');
       final callbackResp = await _dio.post(
         ApiConstants.authGithubCallback,
@@ -149,7 +189,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         isSyncing: true,
         syncMessage: 'Connecting to GitHub...',
-        firebaseUser: userCredential.user,
+        firebaseUser: firebaseUser,
         githubConnected: true,
       );
 
@@ -168,29 +208,38 @@ class AuthNotifier extends StateNotifier<AuthState> {
         debugPrint('[Auth] Sync notice: $e');
       }
 
-      // 5. Complete sign-in process -> navigates to Dashboard
+      // 5. Complete sign-in process → navigates to Dashboard
       state = state.copyWith(
         isAuthenticated: true,
         isLoading: false,
         isSyncing: false,
         syncMessage: null,
-        firebaseUser: userCredential.user,
+        firebaseUser: firebaseUser,
         githubConnected: true,
       );
     } catch (e) {
       debugPrint('[Auth] GitHub sign-in error: $e');
+
+      // Sign out on failure so Firebase session is clean for next attempt.
+      try { await FirebaseAuth.instance.signOut(); } catch (_) {}
+
       String msg = e.toString();
       if (msg.contains('connection timeout') || msg.contains('connectTimeout') || msg.contains('receiveTimeout')) {
         msg = 'Server was sleeping (Render Free Tier cold start). Now awake! Please tap "Sign in with GitHub" again.';
       } else if (msg.contains('INVALID_APP_ID')) {
-        msg = 'Android Firebase App ID is not registered yet.\nPlease use Personal Access Token (PAT) below to sign in!';
+        msg = 'Android Firebase App ID mismatch. Check SHA-1 is registered in Firebase Console.';
       } else if (msg.contains('missing initial state') || msg.contains('sessionStorage') || msg.contains('storage-partitioned') || msg.contains('initial state')) {
-        msg = 'Mobile browser blocked storage session.\nPlease use "Sign in with Personal Access Token (PAT)" below!';
+        msg = 'Mobile browser blocked storage session. Please try again.';
+      } else if (msg.contains('timed out') || msg.contains('TimeoutException')) {
+        msg = 'Sign-in timed out. Please try again.';
       }
       state = state.copyWith(
         isLoading: false,
         errorMessage: msg,
       );
+    } finally {
+      // FIX #2: Always lower the flag when sign-in flow ends (success or error).
+      _isSigningIn = false;
     }
   }
 
