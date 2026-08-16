@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -96,9 +97,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       UserCredential userCredential;
       if (kIsWeb) {
-        userCredential = await FirebaseAuth.instance.signInWithPopup(githubProvider);
+        userCredential = await FirebaseAuth.instance.signInWithPopup(githubProvider).timeout(
+          const Duration(seconds: 45),
+          onTimeout: () => throw TimeoutException('Sign-in operation timed out. Please try again.'),
+        );
       } else {
-        userCredential = await FirebaseAuth.instance.signInWithProvider(githubProvider);
+        userCredential = await FirebaseAuth.instance.signInWithProvider(githubProvider).timeout(
+          const Duration(seconds: 45),
+          onTimeout: () => throw TimeoutException('Sign-in operation timed out. Please try again.'),
+        );
       }
 
       // Extract GitHub access token from OAuth credential
