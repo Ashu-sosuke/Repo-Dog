@@ -54,8 +54,8 @@ async def github_auth_callback(
                 if existing.data:
                     user_db_id = existing.data[0]["id"]
             
-            # 2. Encrypt token and save Github Account (delete+insert since upsert needs unique constraint)
-            if user_db_id:
+            # 2. Encrypt token and save Github Account if valid token provided
+            if user_db_id and payload.github_access_token and not payload.github_access_token.startswith("NO_TOKEN"):
                 encrypted_token = encrypt_token(payload.github_access_token)
                 try:
                     # Remove existing entry for this user first

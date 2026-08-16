@@ -159,22 +159,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
           debugPrint('[Auth] Sync error (non-fatal): $e');
         }
       } else {
-        // Should not happen after the forced sign-out above, but handle gracefully
-        debugPrint('[Auth] WARNING: No GitHub access token returned even after forced re-auth.');
-        try {
-          await _dio.post(
-            ApiConstants.authGithubCallback,
-            data: {
-              'github_access_token': 'NO_TOKEN_REAUTHENTICATE',
-              'github_username': userCredential.additionalUserInfo?.username,
-              'email': userCredential.user?.email,
-              'display_name': userCredential.user?.displayName,
-              'avatar_url': userCredential.user?.photoURL,
-            },
-          );
-        } catch (e) {
-          debugPrint('[Auth] Profile registration error: $e');
-        }
+        debugPrint('[Auth] WARNING: No GitHub OAuth access token returned by provider.');
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'GitHub OAuth token was not returned by browser. Please use "Sign in with Personal Access Token (PAT)" below!',
+        );
+        return;
       }
 
       // Sync done — clear the syncing flag so router navigates to dashboard
@@ -184,7 +174,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isSyncing: false,
         syncMessage: null,
         firebaseUser: userCredential.user,
-        githubConnected: accessToken != null && accessToken.isNotEmpty,
+        githubConnected: accessToken.isNotEmpty,
       );
     } catch (e) {
       debugPrint('[Auth] GitHub sign-in error: $e');

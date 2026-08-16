@@ -70,3 +70,5 @@ app/app.iml
 .DS_Store?
 ehthumbs.db
 Thumbs.db
+
+.vercel
