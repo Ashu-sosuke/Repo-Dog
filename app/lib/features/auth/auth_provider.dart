@@ -115,66 +115,60 @@ class AuthNotifier extends StateNotifier<AuthState> {
       debugPrint('[Auth] GitHub user ID: ${profile?['id']}');
       debugPrint('[Auth] Firebase UID: ${userCredential.user?.uid}');
 
+      // 1. Build callback payload
+      final Map<String, dynamic> callbackData = {
+        'github_user_id': profile?['id'],
+        'github_username': userCredential.additionalUserInfo?.username,
+        'email': userCredential.user?.email,
+        'display_name': userCredential.user?.displayName,
+        'avatar_url': userCredential.user?.photoURL,
+        'scopes': ['repo', 'read:user'],
+      };
       if (accessToken != null && accessToken.isNotEmpty) {
-        // Post real GitHub access token to backend
-        debugPrint('[Auth] Posting token to /auth/github/callback...');
-        final callbackResp = await _dio.post(
-          ApiConstants.authGithubCallback,
-          data: {
-            'github_access_token': accessToken,
-            'github_user_id': profile?['id'],
-            'github_username': userCredential.additionalUserInfo?.username,
-            'email': userCredential.user?.email,
-            'display_name': userCredential.user?.displayName,
-            'avatar_url': userCredential.user?.photoURL,
-            'scopes': ['repo', 'read:user'],
-          },
-        );
-        debugPrint('[Auth] Callback response: ${callbackResp.data}');
-
-        // Mark as authenticated first so router can show the sync loading screen
-        state = state.copyWith(
-          isAuthenticated: true,
-          isLoading: false,
-          isSyncing: true,
-          syncMessage: 'Connecting to GitHub...',
-          firebaseUser: userCredential.user,
-          githubConnected: true,
-        );
-
-        // Run the full GitHub sync with progress updates
-        debugPrint('[Auth] Triggering GitHub sync...');
-        try {
-          state = state.copyWith(syncMessage: 'Fetching your repositories...');
-          final syncResp = await _dio.post('/sync/all?sync_now=true');
-          debugPrint('[Auth] Sync result: ${syncResp.data}');
-          final reposSynced = (syncResp.data['repos_synced'] as int?) ?? 0;
-          state = state.copyWith(
-            syncMessage: 'Synced $reposSynced repositories ✓',
-            syncReposCount: reposSynced,
-          );
-          // Brief pause so user sees the success message
-          await Future.delayed(const Duration(milliseconds: 1200));
-        } catch (e) {
-          debugPrint('[Auth] Sync error (non-fatal): $e');
-        }
-      } else {
-        debugPrint('[Auth] WARNING: No GitHub OAuth access token returned by provider.');
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage: 'GitHub OAuth token was not returned by browser. Please use "Sign in with Personal Access Token (PAT)" below!',
-        );
-        return;
+        callbackData['github_access_token'] = accessToken;
       }
 
-      // Sync done — clear the syncing flag so router navigates to dashboard
+      // 2. Post callback to backend (updates user record & encrypted token if provided)
+      debugPrint('[Auth] Posting auth callback to backend...');
+      final callbackResp = await _dio.post(
+        ApiConstants.authGithubCallback,
+        data: callbackData,
+      );
+      debugPrint('[Auth] Callback response: ${callbackResp.data}');
+
+      // 3. Mark state as syncing so UI transitions to SyncLoadingScreen
+      state = state.copyWith(
+        isAuthenticated: true,
+        isLoading: false,
+        isSyncing: true,
+        syncMessage: 'Connecting to GitHub...',
+        firebaseUser: userCredential.user,
+        githubConnected: true,
+      );
+
+      // 4. Trigger full GitHub repo sync
+      try {
+        state = state.copyWith(syncMessage: 'Fetching your repositories...');
+        final syncResp = await _dio.post('/sync/all?sync_now=true');
+        debugPrint('[Auth] Sync result: ${syncResp.data}');
+        final reposSynced = (syncResp.data['repos_synced'] as int?) ?? 0;
+        state = state.copyWith(
+          syncMessage: 'Synced $reposSynced repositories ✓',
+          syncReposCount: reposSynced,
+        );
+        await Future.delayed(const Duration(milliseconds: 1200));
+      } catch (e) {
+        debugPrint('[Auth] Sync notice: $e');
+      }
+
+      // 5. Complete sign-in process -> navigates to Dashboard
       state = state.copyWith(
         isAuthenticated: true,
         isLoading: false,
         isSyncing: false,
         syncMessage: null,
         firebaseUser: userCredential.user,
-        githubConnected: accessToken.isNotEmpty,
+        githubConnected: true,
       );
     } catch (e) {
       debugPrint('[Auth] GitHub sign-in error: $e');

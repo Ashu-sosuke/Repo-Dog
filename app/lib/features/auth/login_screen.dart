@@ -13,14 +13,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _btnHovered = false;
-  bool _showPatInput = false;
-  final TextEditingController _patController = TextEditingController();
-
-  @override
-  void dispose() {
-    _patController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,101 +217,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-
-                    // ── Personal Access Token (PAT) Alternative Sign-In ─────
-                    const SizedBox(height: 12),
-                    TextButton.icon(
-                      onPressed: () {
-                        setState(() => _showPatInput = !_showPatInput);
-                      },
-                      icon: Icon(
-                        _showPatInput ? Icons.keyboard_arrow_up_rounded : Icons.key_rounded,
-                        size: 16,
-                        color: AppTheme.accentBlue,
-                      ),
-                      label: Text(
-                        _showPatInput ? 'Hide Token Input' : 'Or sign in with Personal Access Token (PAT)',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.accentBlue,
-                        ),
-                      ),
-                    ),
-                    if (_showPatInput) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppTheme.canvasOverlay,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppTheme.borderDefault),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'GitHub Personal Access Token (PAT)',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.fgDefault,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Ideal for mobile browsers where cross-site storage is restricted. Requires repo & read:user scopes.',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                color: AppTheme.fgMuted,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              controller: _patController,
-                              obscureText: true,
-                              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.fgDefault),
-                              decoration: InputDecoration(
-                                hintText: 'ghp_xxxxxxxxxxxxxxxxxxxx',
-                                hintStyle: GoogleFonts.inter(fontSize: 12, color: AppTheme.fgSubtle),
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                fillColor: AppTheme.canvasDefault,
-                                filled: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: AppTheme.borderDefault),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: AppTheme.borderDefault),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: AppTheme.accentBlue),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            ElevatedButton(
-                              onPressed: authState.isLoading
-                                  ? null
-                                  : () => ref.read(authProvider.notifier).signInWithPAT(_patController.text),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.accentBlue,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                              ),
-                              child: Text(
-                                'Sign In with Token',
-                                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
 
                     const SizedBox(height: 32),
 
