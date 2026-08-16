@@ -267,7 +267,11 @@ class GitHubSyncService:
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     }
                     if client:
-                        client.table("branches").upsert(branch_data, on_conflict="repository_id,name").execute()
+                        existing = client.table("branches").select("id").eq("repository_id", db_repo_id).eq("name", b_name).execute()
+                        if existing.data and len(existing.data) > 0:
+                            client.table("branches").update(branch_data).eq("id", existing.data[0]["id"]).execute()
+                        else:
+                            client.table("branches").insert(branch_data).execute()
         except Exception as e:
             print(f"Error syncing branches for {owner}/{repo}: {e}")
 
@@ -293,7 +297,11 @@ class GitHubSyncService:
                         "committed_at": commit_info.get("committer", {}).get("date") or commit_info.get("author", {}).get("date")
                     }
                     if client:
-                        client.table("commits").upsert(c_data, on_conflict="repository_id,sha").execute()
+                        existing = client.table("commits").select("id").eq("repository_id", db_repo_id).eq("sha", sha).execute()
+                        if existing.data and len(existing.data) > 0:
+                            client.table("commits").update(c_data).eq("id", existing.data[0]["id"]).execute()
+                        else:
+                            client.table("commits").insert(c_data).execute()
         except Exception as e:
             print(f"Error syncing commits for {owner}/{repo}: {e}")
 
