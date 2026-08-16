@@ -16,6 +16,7 @@ class ApiConstants {
   }
 
   static const String authGithubCallback = '/auth/github/callback';
+  static const String authGithubExchangeCode = '/auth/github/exchange-code';
   static const String authMe = '/auth/me';
 
   static const String dashboard = '/dashboard';

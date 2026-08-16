@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
@@ -116,55 +117,126 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // NOTE: 'prompt: consent' is a Google/OIDC parameter — GitHub ignores it.
       // Removed to keep the OAuth parameters clean.
 
-      UserCredential userCredential;
+      UserCredential? userCredential;
+      String? accessToken;
+
       if (kIsWeb) {
+        // ── Web: signInWithPopup returns the GitHub access token directly ──
         userCredential = await FirebaseAuth.instance.signInWithPopup(githubProvider).timeout(
           const Duration(seconds: 60),
           onTimeout: () => throw TimeoutException('Sign-in timed out. Please try again.'),
         );
+        final cred = userCredential.credential;
+        if (cred is OAuthCredential) {
+          accessToken = cred.accessToken;
+          debugPrint('[Auth] Web accessToken: ${accessToken != null ? "OK (${accessToken.length} chars)" : "NULL"}');
+        }
       } else {
+        // ── Android: Two-step flow ─────────────────────────────────────────
+        // Step 1: Open GitHub OAuth in Chrome Custom Tab via flutter_web_auth_2.
+        //         This captures the authorization CODE (not the token).
+        //         The redirect lands at repodog://callback?code=xxx
+        const githubClientId = 'Ov23liXcvuEnM7eN6BTG'; // public — safe in app
+        final githubAuthUrl = Uri.https('github.com', '/login/oauth/authorize', {
+          'client_id': githubClientId,
+          'redirect_uri': 'repodog://callback',
+          'scope': 'repo read:user',
+          'allow_signup': 'true',
+        });
+
+        final result = await FlutterWebAuth2.authenticate(
+          url: githubAuthUrl.toString(),
+          callbackUrlScheme: 'repodog',
+        ).timeout(
+          const Duration(seconds: 60),
+          onTimeout: () => throw TimeoutException('GitHub authorization timed out. Please try again.'),
+        );
+
+        final code = Uri.parse(result).queryParameters['code'];
+        if (code == null || code.isEmpty) {
+          throw Exception('GitHub did not return an authorization code.');
+        }
+        debugPrint('[Auth] Android: Got GitHub auth code, exchanging via backend...');
+
+        // Step 2: Firebase sign-in for identity (so we have a Firebase UID
+        //         and the interceptor can attach a valid ID token).
         userCredential = await FirebaseAuth.instance.signInWithProvider(githubProvider).timeout(
           const Duration(seconds: 60),
-          onTimeout: () => throw TimeoutException('Sign-in timed out. Please try again.'),
+          onTimeout: () => throw TimeoutException('Firebase sign-in timed out.'),
         );
-      }
 
-      // FIX #4: Wait for Firebase session to fully propagate so that
-      // FirebaseTokenInterceptor finds a non-null currentUser and attaches
-      // the real ID token instead of falling back to the mock dev token.
-      User? firebaseUser = userCredential.user;
-      if (firebaseUser == null) {
-        // Poll briefly for currentUser to appear (Android propagation delay).
-        for (int i = 0; i < 10; i++) {
-          await Future.delayed(const Duration(milliseconds: 200));
-          firebaseUser = FirebaseAuth.instance.currentUser;
-          if (firebaseUser != null) break;
+        // Wait for Firebase session to propagate so interceptor gets real ID token.
+        User? firebaseUser = userCredential.user;
+        if (firebaseUser == null) {
+          for (int i = 0; i < 10; i++) {
+            await Future.delayed(const Duration(milliseconds: 200));
+            firebaseUser = FirebaseAuth.instance.currentUser;
+            if (firebaseUser != null) break;
+          }
         }
+        debugPrint('[Auth] Android: Firebase user ready: ${firebaseUser?.uid}');
+
+        // Step 3: POST code to backend → backend exchanges for real GitHub token.
+        final profile = userCredential.additionalUserInfo?.profile;
+        final exchangeResp = await _dio.post(
+          ApiConstants.authGithubExchangeCode,
+          data: {
+            'code': code,
+            'github_user_id': profile?['id'],
+            'github_username': userCredential.additionalUserInfo?.username,
+            'email': firebaseUser?.email,
+            'display_name': firebaseUser?.displayName,
+            'avatar_url': firebaseUser?.photoURL,
+          },
+        );
+        debugPrint('[Auth] Android exchange-code response: ${exchangeResp.data}');
+
+        // Mark state as syncing → UI transitions to SyncLoadingScreen
+        state = state.copyWith(
+          isAuthenticated: true,
+          isLoading: false,
+          isSyncing: true,
+          syncMessage: 'Connecting to GitHub...',
+          firebaseUser: firebaseUser,
+          githubConnected: true,
+        );
+
+        // Trigger sync and complete
+        try {
+          state = state.copyWith(syncMessage: 'Fetching your repositories...');
+          final syncResp = await _dio.post('/sync/all?sync_now=true');
+          debugPrint('[Auth] Android sync result: ${syncResp.data}');
+          final reposSynced = (syncResp.data['repos_synced'] as int?) ?? 0;
+          state = state.copyWith(
+            syncMessage: 'Synced $reposSynced repositories ✓',
+            syncReposCount: reposSynced,
+          );
+          await Future.delayed(const Duration(milliseconds: 1200));
+        } catch (e) {
+          debugPrint('[Auth] Android sync notice: $e');
+        }
+
+        state = state.copyWith(
+          isAuthenticated: true,
+          isLoading: false,
+          isSyncing: false,
+          syncMessage: null,
+          firebaseUser: firebaseUser,
+          githubConnected: true,
+        );
+        return; // Android flow complete — skip the web block below
       }
-      debugPrint('[Auth] Firebase user ready: ${firebaseUser?.uid}');
 
-      // FIX #1: Extract GitHub access token from OAuthCredential.
-      // On Web (signInWithPopup) this is populated. On Android (signInWithProvider)
-      // the Firebase SDK may return null for accessToken — this is a known limitation
-      // of the Chrome Custom Tab flow in firebase_auth 5.x on Android.
-      // We proceed without it; the backend stores any valid token if provided.
-      String? accessToken;
-      final cred = userCredential.credential;
-      if (cred is OAuthCredential) {
-        accessToken = cred.accessToken;
-        debugPrint('[Auth] OAuthCredential accessToken: ${accessToken != null ? "OK (${accessToken.length} chars)" : "NULL — Android limitation, proceeding without it"}');
-      }
+      // ── Web continuation (after signInWithPopup) ─────────────────────────
+      // userCredential is non-null here (Android returned above).
+      final webUser = userCredential!;
+      User? firebaseUser = webUser.user ?? FirebaseAuth.instance.currentUser;
+      final profile = webUser.additionalUserInfo?.profile;
 
-      // Log additional user info for debugging
-      final profile = userCredential.additionalUserInfo?.profile;
-      debugPrint('[Auth] GitHub username: ${userCredential.additionalUserInfo?.username}');
-      debugPrint('[Auth] GitHub user ID: ${profile?['id']}');
-      debugPrint('[Auth] Firebase UID: ${firebaseUser?.uid}');
-
-      // 1. Build callback payload
+      // Post callback to backend (stores token if accessToken was captured)
       final Map<String, dynamic> callbackData = {
         'github_user_id': profile?['id'],
-        'github_username': userCredential.additionalUserInfo?.username,
+        'github_username': webUser.additionalUserInfo?.username,
         'email': firebaseUser?.email,
         'display_name': firebaseUser?.displayName,
         'avatar_url': firebaseUser?.photoURL,
@@ -173,15 +245,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (accessToken != null && accessToken.isNotEmpty) {
         callbackData['github_access_token'] = accessToken;
       }
-
-      // 2. Post callback to backend (updates user record & encrypted token if provided).
-      // FirebaseTokenInterceptor will now find a valid currentUser because we waited above.
-      debugPrint('[Auth] Posting auth callback to backend...');
-      final callbackResp = await _dio.post(
-        ApiConstants.authGithubCallback,
-        data: callbackData,
-      );
-      debugPrint('[Auth] Callback response: ${callbackResp.data}');
+      debugPrint('[Auth] Posting web callback to backend...');
+      final callbackResp = await _dio.post(ApiConstants.authGithubCallback, data: callbackData);
+      debugPrint('[Auth] Web callback response: ${callbackResp.data}');
 
       // 3. Mark state as syncing so UI transitions to SyncLoadingScreen
       state = state.copyWith(
