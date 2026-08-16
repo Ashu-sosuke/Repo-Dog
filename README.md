@@ -72,8 +72,8 @@ graph LR
 ### 🎨 GitHub Dark Aesthetic
 Tailored GitHub Dark design system — `#0D1117` canvas, `#161B22` sidebar, `#30363D` borders, `#58A6FF` accent blue, `#3FB950` contribution green.
 
-### 🔑 1-Step GitHub Sign-In
-Seamless authentication via Firebase GitHub OAuth, with PAT and Dev fallback modes across Web, Android, and Desktop.
+### 🔑 1-Click Direct GitHub Sign-In
+Seamless 1-click authentication via Firebase GitHub OAuth with account selection support, automatically encrypting tokens and syncing repository telemetry.
 
 ### 📈 Live GraphQL Contribution Heatmap
 Fetches the exact contribution calendar from the GitHub GraphQL API (`contributionsCollection.contributionCalendar`), displaying total contributions and a daily contribution-intensity grid.
@@ -229,11 +229,13 @@ flutter build apk --release
 
 **Web (Vercel Deploy)**
 ```powershell
+# 1. Build the Flutter Web bundle
 cd app
 flutter build web --release
 
-cd ..
-npx vercel --prod
+# 2. Deploy directly from the web build folder
+cd build/web
+npx -y vercel --prod
 ```
 
 **Windows Desktop (.exe)**
