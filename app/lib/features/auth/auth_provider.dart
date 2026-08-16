@@ -92,6 +92,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final githubProvider = GithubAuthProvider();
       githubProvider.addScope('repo');
       githubProvider.addScope('read:user');
+      githubProvider.setCustomParameters({'prompt': 'consent'});
 
       UserCredential userCredential;
       if (kIsWeb) {
